@@ -3,8 +3,8 @@
 (use file.util)
 (use simply)
 
-(require "./src/words")
 (require "./src/common")
+(require "./src/words")
 (require "./src/scanner")
 (require "./src/parser")
 
@@ -14,12 +14,15 @@
 
 ; =init
 ; -----------------------
-(define (init)
+(define (namakemono-initialize)
+  ; default words
   (for-each
     (lambda (x)
       (set-variable (car x) (cadr x))
       )
     *words*)
+  ; library
+  (if (not *debug*) (for-each load-source (collect-library *library-path*)))
   )
 
 ; =del-tab
@@ -73,25 +76,20 @@
     (directory-list path :children? #t :add-path? #t))
   )
 
-; =load-source
-; ----------------
-(define (load-source filename)
-  (let* ((code (del-tab (trim (file->string filename))))
+; =run-source
+; --------------------
+(define (run-source source-code)
+  (let* ((code (del-tab (trim source-code)))
          (all-tokens (scanner code))
          )
     (run-tokens all-tokens)
     )
   )
 
-; =main
-; ---------------
-(define (main args)
-  (when (> (length args) 1)
-    ; initialize
-    (init)
-    ; load librarys
-    (if (not *debug*) (for-each load-source (collect-library *library-path*)))
-    ; load and run source
-    (load-source (cadr args))
-    )
+; =load-source
+; ----------------
+(define (load-source filename)
+  (run-source (file->string filename))
   )
+
+

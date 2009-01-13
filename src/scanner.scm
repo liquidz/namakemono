@@ -1,3 +1,12 @@
+(define *cr* #/\\r/)
+(define *lf* #/\\n/)
+
+(define (correct-escape-sequence str)
+  (regexp-replace-all* str *cr* "\r" *lf* "\n")
+  )
+
+; =has-flexible-length-argument?
+; --------------------------------
 (define (has-flexible-length-argument? arg-ls)
   (char=? (string-ref (keyword->string (cadr (last arg-ls))) 0) #\*)
   )
@@ -48,7 +57,7 @@
              )
            ]
           [else
-            (error-occur "lambda parameter" "original-code = " original-ode)
+            (error "lambda parameter" "original-code = " original-ode)
             ]
 ;            'lambda-parameter-error]
           )
@@ -132,7 +141,7 @@
                      ]
                     [else
                       (set! *current-uid* last-uid)
-                      (error-occur "lambda parameter" "correct = " param ", get = " p)
+                      (error "lambda parameter" "correct = " param ", get = " p)
                       ]
                     )
                   ]
@@ -169,14 +178,19 @@
             (loop (m 'after) res)
             )
        ]
-      [(#/^[\ \t]*[\"\'](.*?)[\"\']/ code)
+      [(#/^[\ \t]*\"(.*?)\"/ code)
        => (lambda (m)
-            (loop (m 'after) (cons (list :string (m 1)) res))
+            (loop (m 'after) (cons (list :string (correct-escape-sequence (m 1))) res))
             )
        ]
-      [(#/^[\ \t]*([0-9]+)/ code)
+      [(#/^[\ \t]*\'(.*?)\'/ code)
        => (lambda (m)
-            (loop (m 'after) (cons (list :integer (string->number (m 1))) res))
+            (loop (m 'after) (cons (list :string (correct-escape-sequence (m 1))) res))
+            )
+       ]
+      [(#/^[\ \t]*(\-?[0-9]+([\.\/]([0-9]+))?)/ code)
+       => (lambda (m)
+            (loop (m 'after) (cons (list :number (string->number (m 1))) res))
             )
        ]
       [(#/^[\ \t]*(true|false)/ code)
@@ -237,7 +251,7 @@
             )
        ]
       [else
-        (error-occur "scanning" "code = " code)
+        (error "scanning" "code = " code)
 ;        (debug "scanning error = " code)
         ]
       )

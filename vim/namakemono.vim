@@ -7,12 +7,12 @@ endif
 syn keyword nmkDefine def let1
 syn match nmkDefine "_"
 "syn match nmkType ","
-syn keyword nmkFunction arr each pr cons car cdr reverse load ! null? fun?
+syn keyword nmkFunction arr each pr di cons car cdr reverse load ! null? fun?
 syn keyword nmkTodo   contained TODO FIXME XXX
 syn match nmkComment ";.*$" contains=nmkTodo
 syn region nmkComment  start="#|" end="|#"
 syn keyword nmkStatement if fn end
-syn keyword nmkType this
+syn keyword nmkType this nl
 syn match nmkStatement "\."
 syn match nmkStatement "\.\<[0-9]\+\>\."
 syn match nmkNumber "\<[0-9]\+\>"

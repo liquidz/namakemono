@@ -1,3 +1,5 @@
+(define *nmk-version* "0.10")
+
 (define *global-namespace* (make-hash-table-wrap))
 (define *local-namespace* (make-hash-table-wrap))
 
@@ -87,8 +89,7 @@
 (define (_get-global-variable key)
   (if (*global-namespace* '() 'exists? key)
     (*global-namespace* key)
-    (string->symbol #`"do not found variable  key = ,|key| / uid = ,|*current-uid*|")
-;    'do-not-found-variable
+    (error "do not found variable" "key = " key " / uid = " *current-uid*)
     )
   )
 
@@ -116,11 +117,5 @@
       (*global-namespace* key value)
       ]
     )
-  )
-
-(define (error-occur title . msg)
-  (print "* " title " error")
-  (apply print msg)
-  (exit)
   )
 

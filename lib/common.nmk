@@ -1,15 +1,23 @@
+; constant
+; ---------------------------------------------
 arr . def 'emp'
 
-def '!' [(boolean)
-	if false true boolean
-]
+def 'nl' [ pr '' ]
 
+; condition
+; ---------------------------------------------
 def 'when' [(when-func cond)
-	if when-func "" cond
+	if when-func emp cond
 ]
 
 def 'unless' [(unless-func cond)
 	! cond . when unless-func
+]
+
+; list
+; ---------------------------------------------
+def '!' [(boolean)
+	if false true boolean
 ]
 
 def 'each' [(each-fun each-ls)
@@ -19,28 +27,18 @@ def 'each' [(each-fun each-ls)
 	]
 ]
 
-def 'let1' [(let1-key let1-value let1-fun)
-	fun? let1-value . if [let1-value] let1-value . def let1-key
-	let1-fun
-]
-
-def '++' [+ _ 1]
-
-def '--' [- _ 1]
-
-def 'for' [(initial-val last-val change-fun for-fun)
-	= initial-val last-val . unless [
-		for-fun initial-val
-                change-fun initial-val .0. for last-val change-fun for-fun
-	]
-]
-
 def 'fold' [(fold-fun fold-initial fold-ls)
 	null? fold-ls . if fold-initial [
 		let1 '_fold-res' [car fold-ls .0. fold-fun fold-initial] [
 			cdr fold-ls . fold fold-fun _fold-res
 		]
 	]
+]
+
+def 'map' [(map-fun map-ls)
+	fold [(x res)
+		map-fun x .0. cons res
+	] emp map-ls . rev
 ]
 
 def 'rev' [(rev-ls)
@@ -59,3 +57,26 @@ def 'ref' [(num ls)
 		cdr ls . ref _tmp
 	]
 ]
+
+; arithmetic
+; ---------------------------------------------
+def '++' [+ _ 1]
+
+def '--' [- _ 1]
+
+; temporary
+; ---------------------------------------------
+def 'let1' [(let1-key let1-value let1-fun)
+	fun? let1-value . if [let1-value] let1-value . def let1-key
+	let1-fun
+]
+
+; loop
+; ---------------------------------------------
+def 'for' [(initial-val last-val change-fun for-fun)
+	= initial-val last-val . unless [
+		for-fun initial-val
+                change-fun initial-val .0. for last-val change-fun for-fun
+	]
+]
+

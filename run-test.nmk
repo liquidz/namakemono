@@ -1,24 +1,26 @@
-pr "* print test: passed"
-pr ""
+pr "* print test: passed" .nl
+
+pr "* decimal number test"
++ -10 1.3 . = -8.7 . if "passed" "ng" . pr . nl
+
+pr "* fractional number test"
++ 10/3 2/3 . = 4 . if "passed" "ng" . pr . nl
 
 pr "* pipe test:"
 arr 1 2 3 .each pr
-pr "passed"
-pr ""
+pr "passed" .nl
 
 pr "* variable test"
 def 'i' 1
 pr i
 i . + 3 . pr
-pr "passed"
-pr ""
+pr "passed" .nl
 
 pr "* function test"
 arr 1 2 3 . each [
 	* 3 _ . pr
 ]
-pr "passed"
-pr ""
+pr "passed" . nl
 
 pr "* recursion test"
 def 'fact' [ (num)
@@ -27,8 +29,7 @@ def 'fact' [ (num)
 	]
 ]
 fact 5 . pr
-pr "passed"
-pr ""
+pr "passed" .nl
 
 pr "* flexible length argument test"
 [(a b *c)
@@ -36,16 +37,14 @@ pr "* flexible length argument test"
 	pr "b = " b
 	pr "c = " c
 ] 1 2 3 4 5
-pr "passed"
-pr ""
+pr "passed" . nl
 
 pr "* this syntax test"
 def 'check' [
 	[(n) ++ n]
 ]
-check . this 3 . = 4 . if "passed" "ng" . pr
-pr ""
+check . this 3 . = 4 . if "passed" "ng" . pr . nl
 
 pr "* pipe position test"
-4 .0. - 1 . = 3 . if "passed" "ng" . pr
-pr ""
+4 .0. - 1 . = 3 . if "passed" "ng" . pr . nl
+
