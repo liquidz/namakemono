@@ -1,0 +1,61 @@
+arr . def 'emp'
+
+def '!' [(boolean)
+	if false true boolean
+]
+
+def 'when' [(when-func cond)
+	if when-func "" cond
+]
+
+def 'unless' [(unless-func cond)
+	! cond . when unless-func
+]
+
+def 'each' [(each-fun each-ls)
+	null? each-ls . unless [
+		car each-ls . each-fun
+		cdr each-ls . each each-fun
+	]
+]
+
+def 'let1' [(let1-key let1-value let1-fun)
+	fun? let1-value . if [let1-value] let1-value . def let1-key
+	let1-fun
+]
+
+def '++' [+ _ 1]
+
+def '--' [- _ 1]
+
+def 'for' [(initial-val last-val change-fun for-fun)
+	= initial-val last-val . unless [
+		for-fun initial-val
+                change-fun initial-val .0. for last-val change-fun for-fun
+	]
+]
+
+def 'fold' [(fold-fun fold-initial fold-ls)
+	null? fold-ls . if fold-initial [
+		let1 '_fold-res' [car fold-ls .0. fold-fun fold-initial] [
+			cdr fold-ls . fold fold-fun _fold-res
+		]
+	]
+]
+
+def 'rev' [(rev-ls)
+	fold [(x res) cons x res] emp rev-ls
+]
+
+def 'len' [(len-ls)
+	fold [(x res)
+		++ res
+	] 0 len-ls
+]
+
+def 'ref' [(num ls)
+	= num 0 . if [car ls] [
+		- num 1 . def '_tmp'
+		cdr ls . ref _tmp
+	]
+]
