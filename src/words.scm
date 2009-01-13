@@ -11,6 +11,7 @@
     (list :null? (lambda (x) (null? x)))
     (list :fun? (lambda (x) (procedure? x)))
     (list :load (lambda (filename) (load-source filename)))
+    (list :apply (lambda (fn params) (apply fn params)))
     (list :+ (lambda ints (apply + ints)))
     (list :- (lambda ints (apply - ints)))
     (list :* (lambda ints (apply * ints)))
