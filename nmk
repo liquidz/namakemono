@@ -2,10 +2,10 @@
 
 case $# in
 	0)
-		gosh run.scm
+		gosh namakemono.scm
 		;;
 	1)
-		gosh run.scm $1
+		gosh namakemono.scm $1
 		;;
 esac
 

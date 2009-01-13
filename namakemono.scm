@@ -21,6 +21,7 @@
       (set-variable (car x) (cadr x))
       )
     *words*)
+
   ; library
   (if (not *debug*) (for-each load-source (collect-library *library-path*)))
   )
@@ -92,4 +93,53 @@
   (run-source (file->string filename))
   )
 
+; =command-line-environment
+(define (command-line-environment)
+  (define (get-user-input)
+    (display "nmk> ")
+    (flush)
+    (read-line)
+    )
 
+  (let loop((input (get-user-input)))
+    (cond
+      [(string=? input "exit")
+       (print "bye")
+       ]
+      [(! string=? input "")
+       (let1 res (run-source input)
+          (print res)
+          (loop (get-user-input))
+          )
+       ]
+      [else
+        (loop (get-user-input))
+        ]
+      )
+    )
+  )
+
+; =main
+; ---------------
+(define (main args)
+  (case (length args)
+    [(1)
+     (print "namakemono " *nmk-version*)
+     (display "* initializing..") (flush)
+     ; initialize
+     (namakemono-initialize)
+     (print "ok")
+     ; launch command line environment
+     (command-line-environment)
+     ]
+    [(2)
+     ; initialize
+     (namakemono-initialize)
+     ; load and run source
+     (load-source (cadr args))
+     ]
+    [else
+      (error "execute parameter")
+      ]
+    )
+  )
