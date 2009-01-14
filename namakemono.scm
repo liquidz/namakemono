@@ -1,6 +1,7 @@
 (use srfi-1)
 (use srfi-13)
 (use file.util)
+(use gauche.parseopt)
 (use simply)
 
 (require "./src/common")
@@ -81,11 +82,9 @@
 ; --------------------
 (define (run-source source-code)
   (let* ((code (del-tab (trim source-code)))
-         (all-tokens (time (scanner code)))
+         (all-tokens (scanner code))
          )
-    (time
     (run-tokens all-tokens)
-    )
     )
   )
 
@@ -124,24 +123,36 @@
 ; =main
 ; ---------------
 (define (main args)
-  (case (length args)
-    [(1)
-     (print "namakemono " *nmk-version*)
-     (display "* initializing..") (flush)
-     ; initialize
-     (namakemono-initialize)
-     (print "ok")
-     ; launch command line environment
-     (command-line-environment)
-     ]
-    [(2)
-     ; initialize
-     (namakemono-initialize)
-     ; load and run source
-     (load-source (cadr args))
-     ]
-    [else
-      (error "execute parameter")
-      ]
+  (let-args (cdr args)
+    ((debug "d|debug")
+     . rest-args
+     )
+
+    (case (length rest-args)
+      [(0)
+       (print "namakemono " *nmk-version*)
+       (display "* initializing..") (flush)
+       ; initialize
+       (namakemono-initialize)
+       (print "ok")
+
+       (if debug (set! *debug* #t))
+
+       ; launch command line environment
+       (command-line-environment)
+       ]
+      [(1)
+       ; initialize
+       (namakemono-initialize)
+
+       (if debug (set! *debug* #t))
+
+       ; load and run source
+       (load-source (car rest-args))
+       ]
+      [else
+        (error "execute parameter")
+        ]
+      )
     )
   )

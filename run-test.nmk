@@ -28,8 +28,7 @@ def 'fact' [ (num)
 		- num 1 . fact . * num
 	]
 ]
-fact 5 . pr
-pr "passed" .nl
+fact 5 . = 120 . if "passed" "ng" . pr . nl
 
 pr "* flexible length argument test"
 [(a b *c)

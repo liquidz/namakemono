@@ -1,11 +1,4 @@
 #!/bin/sh
 
-case $# in
-	0)
-		gosh namakemono.scm
-		;;
-	1)
-		gosh namakemono.scm $1
-		;;
-esac
+gosh namakemono.scm $@
 

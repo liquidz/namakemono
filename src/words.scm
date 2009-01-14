@@ -4,6 +4,8 @@
 
 (define *words*
   (list
+    (list :true #t)
+    (list :false #f)
     (list :ver *nmk-version*)
     (list :cons (lambda (x y) (cons x y)))
     (list :car (lambda (ls) (car ls)))

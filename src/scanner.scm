@@ -1,8 +1,91 @@
 (define *cr* #/\\r/)
 (define *lf* #/\\n/)
 
+; =correct-escape-sequence
+; ---------------------------
 (define (correct-escape-sequence str)
-  (regexp-replace-all* str *cr* "\r" *lf* "\n")
+  (let loop((ls (string->list str)) (flag #f) (res '()))
+    (cond
+      [(null? ls) (list->string (reverse res))]
+      [else
+        (let1 fc (car ls)
+          (cond
+            [(char=? fc #\\)
+             (if flag
+               (loop (cdr ls) #f (cons #\\ res))
+               (loop (cdr ls) #t res)
+               )
+             ]
+            [(char=? fc #\r)
+             (loop (cdr ls) #f (cons (if flag #\return fc) res))
+             ]
+            [(char=? fc #\n)
+             (loop (cdr ls) #f (cons (if flag #\newline fc) res))
+             ]
+            [else
+              (loop (cdr ls) #f (cons fc res))
+              ]
+            )
+          )
+        ]
+      )
+    )
+  )
+
+; =del-head-words
+; ------------------------
+(define (del-head-words target-str . chars)
+  (define (del-words-body str)
+    (cond
+      [(string=? str "") str]
+      [else
+        (let1 fc (string-ref str 0)
+          (if (block _break
+                 (fold (lambda (c res)
+                         (if (char=? fc c) (_break #t) #f)
+                         ) #f chars)
+                 )
+            (del-words-body (string-drop str 1))
+            str
+            )
+          )
+        ]
+      )
+    )
+
+  (del-words-body target-str)
+  )
+
+; =del-head-space
+; ----------------------
+(define (del-head-space target-str)
+  (del-head-words target-str #\space #\tab)
+  )
+; =del-head-crlf
+; ----------------------
+(define (del-head-crlf target-str)
+  (del-head-words target-str #\return #\newline)
+  )
+
+; =kiritori
+; ----------------
+(define (kiritori base del)
+  (let1 n (string-scan base del)
+    (values 
+      (string-drop base (+ n (string-length del)))
+      ;      (substring base (+ n (string-length del)) (string-length base))
+      (string-take base n)
+      ;            (substring base 0 n)
+      )
+    )
+  )
+
+; =this?
+; -------------------
+(define (this? code)
+  (let1 n (string-scan code "this")
+    (if n (= n 0) #f)
+    )
   )
 
 ; =has-flexible-length-argument?
@@ -157,103 +240,82 @@
 ; -------------------
 (define (scanner original-code)
   (let loop((code original-code) (res '()))
-    (cond
-      [(string=? code "")
-       (r res)
-       ]
-      [(#/^\#\|.*?\|\#/ code)
-       => (lambda (m)
-            ; comment
-            (loop (m 'after) res)
-            )
-       ]
-      [(#/^[\ \t]*\;[^\r\n]*/ code)
-       => (lambda (m)
-            ; comment
-            (loop (m 'after) res)
-            )
-       ]
-      [(#/^\s*\\\s*/ code)
-       => (lambda (m)
-            (loop (m 'after) res)
-            )
-       ]
-      [(#/^[\ \t]*\"(.*?)\"/ code)
-       => (lambda (m)
-            (loop (m 'after) (cons (list :string (correct-escape-sequence (m 1))) res))
-            )
-       ]
-      [(#/^[\ \t]*\'(.*?)\'/ code)
-       => (lambda (m)
-            (loop (m 'after) (cons (list :string (correct-escape-sequence (m 1))) res))
-            )
-       ]
-      [(#/^[\ \t]*(\-?[0-9]+([\.\/]([0-9]+))?)/ code)
-       => (lambda (m)
-            (loop (m 'after) (cons (list :number (string->number (m 1))) res))
-            )
-       ]
-      [(#/^[\ \t]*(true|false)/ code)
-       => (lambda (m)
-            (loop (m 'after) (cons (list :true (if (string=? (m 1) "true") #t #f)) res))
-            )
-       ]
-      [(#/^[\ \t]*this/ code)
-       => (lambda (m)
-            (loop (m 'after) (cons (list :this '()) res))
-            )
-       ]
-      [(#/^[\ \t]*#\/(.+?)\// code)
-       => (lambda (m)
-            (loop (m 'after) (cons (list :regexp (string->regexp (m 1))) res))
-            )
-       ]
-      [(#/^[\ \t]*fn[\ \t]*(\((.+?)\))?/ code)
-       => (lambda (m)
-            (let ((param (m 2))
-                  (body (get-correct-end (m 'after) "fn" "end")))
-              ; "+ 3" is length for "end"
-              (loop (string-drop (m 'after) (+ (string-length body) 3)) (cons (make-lambda param body) res))
-              )
-            )
-       ]
-      [(#/^[\ \t]*\[[\ \t]*(\((.+?)\))?/ code)
-       => (lambda (m)
-            (let ((param (m 2))
-                  (body (get-correct-end (m 'after) "\\[" "\\]")))
-              ; "+ 1" is length for "]"
-              (loop (string-drop (m 'after) (+ (string-length body) 1)) (cons (make-lambda param body) res))
-              )
-            )
-       ]
-      [(#/^[\ \t]*\{(.+?)\}/ code)
-       => (lambda (m)
-            (loop (m 'after) (cons (list :group (scanner (m 1))) res))
-            )
-       ]
-      [(#/^[\ \t]*\.(([0-9]+)\.)?/ code)
-       => (lambda (m)
-            (if (m 2)
-              (loop (m 'after) (cons (list :pipe-pos (string->number (m 2))) (cons (list :pipe '()) res)))
-              (loop (m 'after) (cons (list :pipe '()) res))
-              )
-;            (loop (m 'after) (cons (list :pipe '()) res))
-            )
-       ]
-      [(#/^[\ \t]*[\r\n]+/ code)
-       => (lambda (m)
-            (loop (m 'after) (cons (list :end '()) res))
-            )
-       ]
-      [(#/^[\ \t]*([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)/ code)
-       => (lambda (m)
-            (loop (m 'after) (cons (list :word (make-keyword (m 1))) res))
-            )
-       ]
-      [else
-        (error "scanning" "code = " code)
-;        (debug "scanning error = " code)
-        ]
+    (if (string=? code "") (r res)
+      (let1 first-char (string-ref code 0)
+        (cond
+          [(char=? first-char #\#)
+           (let1 second-char (string-ref code 1)
+             (cond
+               ; multiple lines comment
+               [(char=? second-char #\|)
+                (loop (del-head-space (kiritori code "|#")) res)
+                ]
+               ; regexp
+               [(char=? second-char #\/)
+                (receive (after before) (kiritori (string-drop code 2) "/")
+                  (loop (del-head-space after)
+                        (cons (list :regexp (string->regexp before)) res))
+                  )
+                ]
+               )
+             )
+           ]
+          ; end
+          [(or (char=? first-char #\newline) (char=? first-char #\return))
+           (loop (del-head-space (del-head-crlf code)) (cons (list :end '()) res))
+           ]
+          ; one line comment
+          [(char=? first-char #\;)
+           (loop (del-head-space (string-drop code (++ (string-scan code #\newline)))) res)
+           ]
+          [(char=? first-char #\")
+           (receive (after before) (kiritori (string-drop code 1) "\"")
+             (loop (del-head-space after) (cons (list :string (correct-escape-sequence before)) res))
+             )
+           ]
+          [(char=? first-char #\')
+           (receive (after before) (kiritori (string-drop code 1) "\'")
+             (loop (del-head-space after) (cons (list :string (correct-escape-sequence before)) res))
+             )
+           ]
+          [(char=? first-char #\[)
+           (let* ((m (#/^\[[\ \t]*(\((.+?)\))?/ code))
+                  (param (m 2))
+                  (body (get-correct-end (m 'after) "\\[" "\\]"))
+                  )
+             ; "+ 1" is length for "]"
+             (loop (del-head-space (string-drop (m 'after) (+ (string-length body) 1)))
+                   (cons (make-lambda param body) res))
+             )
+           ]
+          [(char=? first-char #\.)
+           (let1 m (#/^\.(([0-9]+)\.)?[\ \t]*/ code)
+             (if (m 2)
+               (loop (m 'after)
+                     (cons (list :pipe-pos (string->number (m 2))) (cons (list :pipe '()) res)))
+               (loop (m 'after) (cons (list :pipe '()) res))
+               )
+             )
+           ]
+          [(this? code)
+           ; 4 is length of 'this'
+           (loop (del-head-space (string-drop code 4)) (cons (list :this '()) res))
+           ]
+          [(#/^[\ \t]*(\-?[0-9]+([\.\/]([0-9]+))?)[\ \t]*/ code)
+           => (lambda (m)
+                (loop (m 'after) (cons (list :number (string->number (m 1))) res))
+                )
+           ]
+          [(#/^[\ \t]*([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)[\ \t]*/ code)
+           => (lambda (m)
+                (loop (m 'after) (cons (list :word (make-keyword (m 1))) res))
+                )
+           ]
+          [else
+            (error "scanning" "code = " code)
+            ]
+          )
+        )
       )
     )
   )
