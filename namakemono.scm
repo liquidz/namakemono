@@ -82,7 +82,7 @@
 ; --------------------
 (define (run-source source-code)
   (let* ((code (del-tab (trim source-code)))
-         (all-tokens (scanner code))
+         (all-tokens (time (scanner code)))
          )
     (run-tokens all-tokens)
     )

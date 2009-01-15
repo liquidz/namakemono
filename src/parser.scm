@@ -91,9 +91,9 @@
        )
      ]
     ; トークン列の最初が無名関数、または正規表現オブジェクトの場合
-    ;   無名関数の場合は引数があれば実行。引数がなければ else パートに飛びオブジェクトと見なす
+    ;   引数があれば実行。引数がなければ else パートに飛びオブジェクトと見なす
     [(or (and (_lambda? (car expr)) (> (length expr) 1))
-       (_regexp? (car expr)))
+       (and (_regexp? (car expr)) (> (length expr) 1)))
      (let1 first-val (value (car expr))
        (apply first-val (make-params expr returned-value pos))
        )

@@ -66,9 +66,14 @@
 (define (del-head-crlf target-str)
   (del-head-words target-str #\return #\newline)
   )
-
+; =pickup
+; --------------
+(define (pickup ls start end)
+  (drop (take ls (++ end)) start)
+  )
 ; =kiritori
 ; ----------------
+#|
 (define (kiritori base del)
   (let1 n (string-scan base del)
     (values 
@@ -76,6 +81,34 @@
       ;      (substring base (+ n (string-length del)) (string-length base))
       (string-take base n)
       ;            (substring base 0 n)
+      )
+    )
+  )
+|#
+(define (kiritori base del)
+  (let ((len (string-length base))
+        (del-len (string-length del))
+        )
+    (let1 res (block _break
+                     (dotimes (n len)
+                       (when (char=? (string-ref base n) (string-ref del 0))
+                         (cond
+                           [(> n 0)
+                            (when (! char=? (string-ref base (-- n)) #\\)
+                              (if (string=? (substring base n (+ n del-len)) del) (_break n))
+                              )
+                            ]
+                           [else
+                             (if (string=? (substring base n (+ n del-len)) del) (_break n))
+                             ]
+                           )
+                         )
+                       )
+                     0
+                     )
+      (values (string-drop base (+ res del-len))
+              (string-take base res)
+              )
       )
     )
   )
