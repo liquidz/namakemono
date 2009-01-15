@@ -82,7 +82,7 @@
 ; --------------------
 (define (run-source source-code)
   (let* ((code (del-tab (trim source-code)))
-         (all-tokens (time (scanner code)))
+         (all-tokens (scanner code))
          )
     (run-tokens all-tokens)
     )
@@ -104,7 +104,7 @@
 
   (let loop((input (get-user-input)))
     (cond
-      [(string=? input "exit")
+      [(or (! string? input) (string=? input "exit"))
        (print "bye")
        ]
       [(! string=? input "")
@@ -129,6 +129,7 @@
      )
 
     (case (length rest-args)
+      ; command line mode
       [(0)
        (print "namakemono " *nmk-version*)
        (display "* initializing..") (flush)
@@ -138,9 +139,10 @@
 
        (if debug (set! *debug* #t))
 
-       ; launch command line environment
        (command-line-environment)
        ]
+
+      ; file execute mode
       [(1)
        ; initialize
        (namakemono-initialize)

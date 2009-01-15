@@ -24,17 +24,23 @@
     (list :>= (lambda (x y) (>= x y)))
     (list :< (lambda (x y) (< x y)))
     (list :<= (lambda (x y) (<= x y)))
-    (list :file->list (lambda (filename) (file->list filename)))
+    ;(list :file->list (lambda (filename) (file->list filename)))
+    (list :file (lambda (filename) (file->list filename)))
     (list :pr (lambda x (apply print x)))
     (list :di (lambda x (for-each display x)))
     (list :arr (lambda elems (if (and (= 1 (length elems)) (eq? *nil* (car elems))) '() (apply list elems))))
-    (list :match (lambda (regexp-str target-str) ((string->regexp regexp-str) target-str)))
+    ;(list :match (lambda (regexp-str target-str) ((string->regexp regexp-str) target-str)))
     (list :string->regexp (lambda (str) (string->regexp str)))
     (list :if (lambda (ok ng pred)
                 (let1 target (if pred ok ng)
                   (cond
                     [(procedure? target)
-                     (target 'nullxxx)
+                     ; 渡せる暗黙値があれば渡す
+                     (let1 implicit-val (guard (e (else 'nullxxx))
+                                          (get-variable (make-keyword *implicit-variable*))
+                                          )
+                       (target implicit-val)
+                       )
                      ]
                     [else target]
                     )

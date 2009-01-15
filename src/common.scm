@@ -1,4 +1,4 @@
-(define *nmk-version* "0.10")
+(define *nmk-version* "0.12")
 
 (define *global-namespace* (make-hash-table-wrap))
 (define *local-namespace* (make-hash-table-wrap))
@@ -6,6 +6,7 @@
 (define *id-count* 1)
 (define *current-uid* '())
 (define *implicit-variable* "_")
+(define *implicit-variable-word* (list :word (make-keyword *implicit-variable*)))
 (define *library-path* "./lib")
 (define *nil* 'nmk-nil)
 
@@ -54,10 +55,13 @@
       ((*local-namespace* from-uid))
       (lambda (key value)
         (let1 hs (*local-namespace* to-uid)
+          ;(print "----------- take over(" from-uid "=>" to-uid "): " key " = " value)
           (hs key value)
           )
         )
       )
+    ; implicit-variable
+    ;(*local-namespace*)
     )
   )
 
@@ -109,6 +113,7 @@
 ; =set-variable
 ; ----------------------
 (define (set-variable key value)
+  ;(print "================= set(" *current-uid* "): " key " = " value)
   (cond
     [(*local-namespace* '() 'exists? *current-uid*)
      ((*local-namespace* *current-uid*) key value)

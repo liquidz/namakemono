@@ -1,26 +1,44 @@
 pr "* print test: passed" .nl
 
+; ===================================
+
 pr "* decimal number test"
 + -10 1.3 . = -8.7 . if "passed" "ng" . pr . nl
 
+; ===================================
+
 pr "* fractional number test"
 + 10/3 2/3 . = 4 . if "passed" "ng" . pr . nl
+
+; ===================================
 
 pr "* pipe test:"
 arr 1 2 3 .each pr
 pr "passed" .nl
 
+; ===================================
+
 pr "* variable test"
 def 'i' 1
-pr i
-i . + 3 . pr
-pr "passed" .nl
+i . + 3 . = 4 . if "passed" "ng" . pr . nl
+
+; ===================================
 
 pr "* function test"
-arr 1 2 3 . each [
-	* 3 _ . pr
+arr 1 2 3 . fold [(x r)
+	+ x r
+] 0 . = 6 . if "passed" "ng" . pr .  nl
+
+; ===================================
+
+pr "* implicit variable"
+arr 4 5 6 . each [
+	% _ 2 . = 1 . when [
+		= 5 _ . if "passed" "ng" . pr . nl
+	]
 ]
-pr "passed" . nl
+
+; ===================================
 
 pr "* recursion test"
 def 'fact' [ (num)
@@ -30,19 +48,24 @@ def 'fact' [ (num)
 ]
 fact 5 . = 120 . if "passed" "ng" . pr . nl
 
+; ===================================
+
 pr "* flexible length argument test"
 [(a b *c)
-	pr "a = " a
-	pr "b = " b
-	pr "c = " c
+	;hello
+	and [= a 1] [= b 2] [arr 3 4 5 . = c] . if "passed" "ng" . pr . nl
 ] 1 2 3 4 5
-pr "passed" . nl
+;pr "passed" . nl
+
+; ===================================
 
 pr "* this syntax test"
 def 'check' [
 	[(n) ++ n]
 ]
 check . this 3 . = 4 . if "passed" "ng" . pr . nl
+
+; ===================================
 
 pr "* pipe position test"
 4 .0. - 1 . = 3 . if "passed" "ng" . pr . nl
