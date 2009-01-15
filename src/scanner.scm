@@ -1,6 +1,26 @@
 (define *cr* #/\\r/)
 (define *lf* #/\\n/)
 
+; =mymin
+; ---------------------------
+(define (mymin . args)
+  (if (> (length args) 0)
+    (fold
+      (lambda (x res)
+        (cond
+          [(number? res)
+            (if (number? x)
+              (if (< x res) x res)
+              res
+              )
+            ]
+          [else x]
+          )
+        )
+      (car args) (cdr args))
+    #f)
+  )
+
 ; =correct-escape-sequence
 ; ---------------------------
 (define (correct-escape-sequence str)
@@ -301,16 +321,19 @@
           [(char=? first-char #\;)
            (loop (del-head-space (string-drop code (++ (string-scan code #\newline)))) res)
            ]
+          ; string
           [(char=? first-char #\")
            (receive (after before) (kiritori (string-drop code 1) "\"")
              (loop (del-head-space after) (cons (list :string (correct-escape-sequence before)) res))
              )
            ]
+          ; string
           [(char=? first-char #\')
            (receive (after before) (kiritori (string-drop code 1) "\'")
              (loop (del-head-space after) (cons (list :string (correct-escape-sequence before)) res))
              )
            ]
+          ; lambda
           [(char=? first-char #\[)
            (let* ((m (#/^\[[\ \t]*(\((.+?)\))?/ code))
                   (param (m 2))
@@ -321,6 +344,30 @@
                    (cons (make-lambda param body) res))
              )
            ]
+          ; simple lambda
+          [(char=? first-char #\,)
+           (let* ((code2 (string-drop code 1))
+                  (next-comma (string-scan code2 #\,))
+                  (next-period (string-scan code2 #\.))
+                  (next-newline (string-scan code2 #\newline))
+                  )
+             (receive (n clc?) (let1 t (mymin next-comma next-period next-newline)
+                                 (cond
+                                   [t (values t (if (and (number? next-comma) (= t next-comma)) #t #f))]
+                                   [else (error "simple lambda")]
+                                   )
+                                 )
+               (let* ((before (string-take code2 n))
+                      ; "+ 1" is length for ","
+                      (after (string-drop code2 (if clc? (+ n 1) n)))
+                      (m (#/^[\ \t]*(\((.+?)\))?/ before))
+                      )
+                 (loop (del-head-space after) (cons (make-lambda (m 2) (m 'after)) res))
+                 )
+               )
+             )
+           ]
+          ; pipe
           [(char=? first-char #\.)
            (let1 m (#/^\.(([0-9]+)\.)?[\ \t]*/ code)
              (if (m 2)
@@ -330,15 +377,18 @@
                )
              )
            ]
+          ; this syntax
           [(this? code)
            ; 4 is length of 'this'
            (loop (del-head-space (string-drop code 4)) (cons (list :this '()) res))
            ]
+          ; number
           [(#/^[\ \t]*(\-?[0-9]+([\.\/]([0-9]+))?)[\ \t]*/ code)
            => (lambda (m)
                 (loop (m 'after) (cons (list :number (string->number (m 1))) res))
                 )
            ]
+          ; word
           [(#/^[\ \t]*([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)[\ \t]*/ code)
            => (lambda (m)
                 (loop (m 'after) (cons (list :word (make-keyword (m 1))) res))
