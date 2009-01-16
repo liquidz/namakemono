@@ -5,6 +5,7 @@
 
 (define *id-count* 1)
 (define *current-uid* '())
+(define *last-uid* '())
 (define *implicit-variable* "_")
 (define *implicit-variable-word* (list :word (make-keyword *implicit-variable*)))
 (define *library-path* "./lib")
@@ -55,13 +56,10 @@
       ((*local-namespace* from-uid))
       (lambda (key value)
         (let1 hs (*local-namespace* to-uid)
-          ;(print "----------- take over(" from-uid "=>" to-uid "): " key " = " value)
           (hs key value)
           )
         )
       )
-    ; implicit-variable
-    ;(*local-namespace*)
     )
   )
 
@@ -75,6 +73,13 @@
 ; -------------------------
 (define (delete-local-namespace id)
   (*local-namespace* '() 'delete id)
+  )
+
+; =change-current-uid
+; ---------------------
+(define (change-current-uid to-uid)
+  (set! *last-uid* *current-uid*)
+  (set! *current-uid* to-uid)
   )
 
 ; =_get-local-variable
@@ -112,15 +117,17 @@
 
 ; =set-variable
 ; ----------------------
-(define (set-variable key value)
+(define (set-variable key value . uid)
   ;(print "================= set(" *current-uid* "): " key " = " value)
-  (cond
-    [(*local-namespace* '() 'exists? *current-uid*)
-     ((*local-namespace* *current-uid*) key value)
-     ]
-    [else
-      (*global-namespace* key value)
-      ]
+  (let1 target-uid (if (null? uid) *current-uid* (car uid))
+    (cond
+      [(*local-namespace* '() 'exists? target-uid)
+       ((*local-namespace* target-uid) key value)
+       ]
+      [else
+        (*global-namespace* key value)
+        ]
+      )
     )
   )
 

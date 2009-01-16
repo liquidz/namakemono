@@ -12,6 +12,9 @@
     (list :cdr (lambda (ls) (cdr ls)))
     (list :null? (lambda (x) (null? x)))
     (list :fun? (lambda (x) (procedure? x)))
+    (list :str? (lambda (x) (string? x)))
+    (list :num? (lambda (x) (number? x)))
+    (list :arr? (lambda (x) (list? x)))
     (list :load (lambda (filename) (load-source filename)))
     (list :apply (lambda (fn params) (apply fn params)))
     (list :+ (lambda ints (apply + ints)))
@@ -26,11 +29,14 @@
     (list :<= (lambda (x y) (<= x y)))
     ;(list :file->list (lambda (filename) (file->list filename)))
     (list :file (lambda (filename) (file->list filename)))
-    (list :pr (lambda x (apply print x)))
+    (list :pr (lambda x (apply print x) (if (! null? x) (car x))))
     (list :di (lambda x (for-each display x)))
     (list :arr (lambda elems (if (and (= 1 (length elems)) (eq? *nil* (car elems))) '() (apply list elems))))
     ;(list :match (lambda (regexp-str target-str) ((string->regexp regexp-str) target-str)))
     (list :string->regexp (lambda (str) (string->regexp str)))
+    (list :string->list (lambda (str) (string->list str)))
+    (list :string->number (lambda (str) (string->number str)))
+    (list :number->string (lambda (num) (number->string num)))
     (list :if (lambda (ok ng pred)
                 (let1 target (if pred ok ng)
                   (cond
@@ -52,6 +58,12 @@
                    [(keyword? key) (set-variable key value)]
                    )
                  ))
+    (list :ldef (lambda (key value)
+                  (cond
+                    [(or (string? key) (symbol? key)) (set-variable (make-keyword key) value *last-uid*)]
+                    [(keyword? key) (set-variable key value *last-uid*)]
+                    )
+                  ))
     (list :eval (lambda (src)
                   (run-source src)
                   ))

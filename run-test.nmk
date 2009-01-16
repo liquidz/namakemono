@@ -75,3 +75,8 @@ pr "* pipe position test"
 pr "* simple lambda test"
 = 1 1 . if ,pr 'passed',,pr 'ng',
 nl
+
+pr "* ldef test"
+let 'a' 2 'b' 3 'c' 4 [
+	+ a b c . = 9 . if "passed" "ng" . pr . nl
+]

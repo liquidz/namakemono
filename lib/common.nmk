@@ -20,6 +20,18 @@ def '!' [(boolean)
 	if false true boolean
 ]
 
+def 'cadr' [(cadr-ls)
+	cdr cadr-ls .car
+]
+
+def 'caddr' [(cadr-ls)
+	cdr cadr-ls .cdr .car
+]
+
+def 'last' [(last-ls)
+	rev last-ls . car
+]
+
 def 'each' [(each-fun each-ls)
 	null? each-ls . unless [
 		car each-ls . each-fun
@@ -51,10 +63,23 @@ def 'len' [(len-ls)
 	] 0 len-ls
 ]
 
-def 'ref' [(num ls)
-	= num 0 . if [car ls] [
-		- num 1 . def '_tmp'
-		cdr ls . ref _tmp
+def 'ref' [(ref-num ref-ls)
+	= ref-num 0 . if [car ref-ls] [
+		- ref-num 1 . def '_tmp'
+		cdr ref-ls . ref _tmp
+	]
+]
+
+def 'take' [(t-n t-ls)
+	len t-ls .0. - t-n . = 0 . if t-ls [
+		rev t-ls . cdr .rev . take t-n
+	]
+]
+
+def 'drop' [(d-n d-ls)
+	= d-n 0 . if d-ls [
+		-- d-n . def '_tmp'
+		cdr d-ls . drop _tmp
 	]
 ]
 
@@ -69,6 +94,19 @@ def '--' [- _ 1]
 def 'let1' [(let1-key let1-value let1-fun)
 	fun? let1-value . if [let1-value] let1-value . def let1-key
 	let1-fun
+]
+
+def 'let' [(*let-args)
+	len let-args .0. - 1 .1. for 0 ++ [(n)
+		% n 2 . = 0 . if [
+			; key
+			ref n let-args . ldef '_tmp_let_key' 
+		] [
+			;value
+			ref n let-args . ldef _tmp_let_key
+		]
+	]
+	last let-args . do
 ]
 
 ; loop
@@ -119,4 +157,37 @@ def 'or' [(*or-conds)
 			logical-or or-x or-res
 		]
 	] false or-conds
+]
+
+; string
+; ---------------------------------------------
+def 'str-ref' [(sref-str sref-n)
+	string->list sref-str . ref sref-n
+]
+
+def 'list->string' [(l-s-ls)
+	fold [(x res)
+		+ res x
+	] "" l-s-ls
+]
+
+def 'substr' [(str s e)
+	- e s . + 1 . def '_tmp'
+	string->list str . drop s . take _tmp . list->string
+]
+
+; function
+; ---------------------------------------------
+def 'do' [(do-fn)
+	fun? do-fn . when do-fn
+]
+
+def 'recv' [(*recv-args)
+	let1 'recv-ls' [rev recv-args . cadr . do] [
+		len recv-ls .1. for 0 ++ [(n)
+			ref n recv-args . def '_key'
+			ref n recv-ls . ldef _key
+		]
+		last recv-args . do
+	]
 ]

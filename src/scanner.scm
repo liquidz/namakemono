@@ -92,19 +92,9 @@
   (drop (take ls (++ end)) start)
   )
 ; =kiritori
+; baseの先頭からdelを検索し、del以前の文字列・以後の文字列を多値で返す
+; なおバックスラッシュでエスケープされているdelは無視する
 ; ----------------
-#|
-(define (kiritori base del)
-  (let1 n (string-scan base del)
-    (values 
-      (string-drop base (+ n (string-length del)))
-      ;      (substring base (+ n (string-length del)) (string-length base))
-      (string-take base n)
-      ;            (substring base 0 n)
-      )
-    )
-  )
-|#
 (define (kiritori base del)
   (let ((len (string-length base))
         (del-len (string-length del))
@@ -215,7 +205,7 @@
           (lambda p
             (let ((uid (make-uid))
                   (last-uid *current-uid*))
-              (set! *current-uid* uid)
+              (change-current-uid uid)
 
               (make-local-namespace uid)
               (take-over-variables last-uid uid)
@@ -251,7 +241,7 @@
                   (let1 result (run-tokens body)
                     ; delete temporary variables
                     (delete-local-namespace uid)
-                    (set! *current-uid* last-uid)
+                    (change-current-uid last-uid)
 
                     result
                     )
@@ -270,13 +260,13 @@
                      (let1 result (run-tokens body)
                        ; delete temporary variables
                        (delete-local-namespace uid)
-                       (set! *current-uid* last-uid)
+                       (change-current-uid last-uid)
 
                        result
                        )
                      ]
                     [else
-                      (set! *current-uid* last-uid)
+                      (change-current-uid last-uid)
                       (error "lambda parameter" "correct = " param ", get = " p)
                       ]
                     )
@@ -293,6 +283,7 @@
 ; -------------------
 (define (scanner original-code)
   (let loop((code original-code) (res '()))
+    ;(debug "* scanning code\n=====start=====\n" code "\n===== end =====")
     (if (string=? code "") (r res)
       (let1 first-char (string-ref code 0)
         (cond
@@ -319,7 +310,12 @@
            ]
           ; one line comment
           [(char=? first-char #\;)
-           (loop (del-head-space (string-drop code (++ (string-scan code #\newline)))) res)
+           (let1 next-newline (string-scan code #\newline)
+             (if next-newline
+               (loop (del-head-space (string-drop code (++ next-newline))) res)
+               (loop "" res) ; 末尾の場合
+               )
+             )
            ]
           ; string
           [(char=? first-char #\")
@@ -331,6 +327,12 @@
           [(char=? first-char #\')
            (receive (after before) (kiritori (string-drop code 1) "\'")
              (loop (del-head-space after) (cons (list :string (correct-escape-sequence before)) res))
+             )
+           ]
+          ; keyword
+          [(char=? first-char #\:)
+           (let1 m (#/\:([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)/ code)
+             (loop (del-head-space (m 'after)) (cons (list :keyword (make-keyword (m 1))) res))
              )
            ]
           ; lambda
@@ -383,13 +385,15 @@
            (loop (del-head-space (string-drop code 4)) (cons (list :this '()) res))
            ]
           ; number
-          [(#/^[\ \t]*(\-?[0-9]+([\.\/]([0-9]+))?)[\ \t]*/ code)
+          ;[(#/^[\ \t]*(\-?[0-9]+([\.\/]([0-9]+))?)[\ \t]*/ code)
+          [(#/^(\-?[0-9]+([\.\/]([0-9]+))?)[\ \t]*/ code)
            => (lambda (m)
                 (loop (m 'after) (cons (list :number (string->number (m 1))) res))
                 )
            ]
           ; word
-          [(#/^[\ \t]*([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)[\ \t]*/ code)
+          ;[(#/^[\ \t]*([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)[\ \t]*/ code)
+          [(#/^([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)[\ \t]*/ code)
            => (lambda (m)
                 (loop (m 'after) (cons (list :word (make-keyword (m 1))) res))
                 )
