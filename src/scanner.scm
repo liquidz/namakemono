@@ -200,79 +200,85 @@
          (body (scanner (trim original-body)))
          (flexible-arg (has-flexible-length-argument? param))
          )
-    (debug "* lambda: param = " param ", body = " body)
+    (debug 2 "* lambda: param = " param ", body = " body)
     (list :lambda
           (lambda p
-            (let ((uid (make-uid))
-                  (last-uid *current-uid*))
-              (change-current-uid uid)
+            (cond
+              [(and (! null? p) (eq? (car p) *get-lambda-params-length*))
+               (length param)
+               ]
+              [else
+                (let ((uid (make-uid))
+                      (last-uid *current-uid*))
+                  (change-current-uid uid)
 
-              (make-local-namespace uid)
-              (take-over-variables last-uid uid)
+                  (make-local-namespace uid)
+                  (take-over-variables last-uid uid)
 
-              (cond
-                ; 可変長の引数の場合
-                [flexible-arg
-                  ; register temporary variable
-                  (block
-                    _break
-                    (for-each
-                      (lambda (n)
-                        (let* ((var-name (value (list-ref param n)))
-                               (s-var-name (keyword->string var-name))
-                               )
-                          (cond
-                            [(char=? (string-ref s-var-name 0) #\*)
-                             (set-variable (make-keyword (substring s-var-name 1 (string-length s-var-name)))
-                                           (drop p n))
-                             ; 残りのパラメータは全て１つの引数に登録されたので
-                             ;  for-each を抜ける
-                             (_break)
-                             ]
-                            [else
-                              (set-variable var-name (list-ref p n))
-                              ]
-                            )
-                          )
-                        )
-                      (iota (length p) 0))
-                    )
-
-                  (let1 result (run-tokens body)
-                    ; delete temporary variables
-                    (delete-local-namespace uid)
-                    (change-current-uid last-uid)
-
-                    result
-                    )
-                  ]
-                ; 固定長の引数の場合
-                [else
                   (cond
-                    [(= (length p) (length param))
-                     ; register temporary variable
-                     (for-each
-                       (lambda (n)
-                         (set-variable (value (list-ref param n)) (list-ref p n))
-                         )
-                       (iota (length p) 0))
+                    ; 可変長の引数の場合
+                    [flexible-arg
+                      ; register temporary variable
+                      (block
+                        _break
+                        (for-each
+                          (lambda (n)
+                            (let* ((var-name (value (list-ref param n)))
+                                   (s-var-name (keyword->string var-name))
+                                   )
+                              (cond
+                                [(char=? (string-ref s-var-name 0) #\*)
+                                 (set-variable (make-keyword (substring s-var-name 1 (string-length s-var-name)))
+                                               (drop p n))
+                                 ; 残りのパラメータは全て１つの引数に登録されたので
+                                 ;  for-each を抜ける
+                                 (_break)
+                                 ]
+                                [else
+                                  (set-variable var-name (list-ref p n))
+                                  ]
+                                )
+                              )
+                            )
+                          (iota (length p) 0))
+                        )
 
-                     (let1 result (run-tokens body)
-                       ; delete temporary variables
-                       (delete-local-namespace uid)
-                       (change-current-uid last-uid)
+                      (let1 result (run-tokens body)
+                        ; delete temporary variables
+                        (delete-local-namespace uid)
+                        (change-current-uid last-uid)
 
-                       result
-                       )
-                     ]
+                        result
+                        )
+                      ]
+                    ; 固定長の引数の場合
                     [else
-                      (change-current-uid last-uid)
-                      (error "lambda parameter" "correct = " param ", get = " p)
+                      (cond
+                        [(= (length p) (length param))
+                         ; register temporary variable
+                         (for-each
+                           (lambda (n)
+                             (set-variable (value (list-ref param n)) (list-ref p n))
+                             )
+                           (iota (length p) 0))
+
+                         (let1 result (run-tokens body)
+                           ; delete temporary variables
+                           (delete-local-namespace uid)
+                           (change-current-uid last-uid)
+
+                           result
+                           )
+                         ]
+                        [else
+                          (change-current-uid last-uid)
+                          (error "lambda parameter" "correct = " param ", get = " p)
+                          ]
+                        )
                       ]
                     )
-                  ]
-                )
-              )
+                  )
+                ])
 
             )
           )
@@ -283,7 +289,6 @@
 ; -------------------
 (define (scanner original-code)
   (let loop((code original-code) (res '()))
-    ;(debug "* scanning code\n=====start=====\n" code "\n===== end =====")
     (if (string=? code "") (r res)
       (let1 first-char (string-ref code 0)
         (cond

@@ -78,42 +78,45 @@
 ; =execute
 ; ---------------------------
 (define (execute expr returned-value pos)
-  (cond
-    ; トークン列の最初が関数や変数の場合
-    [(_word? (car expr))
-     (let1 first-val (get-variable (value (car expr)))
-       (cond
-         [(procedure? first-val)
-          (apply first-val (make-params expr returned-value pos))
-          ]
-         [else first-val]
+  (let1 first-token (car expr)
+    (cond
+      ; トークン列の最初が関数や変数の場合
+      [(_word? first-token)
+       ;(print "ft = " (value first-token) " / (cdr expr) = " (cdr expr) " / len = " (length (cdr expr)))
+       (let1 first-val (get-variable (value first-token) (cdr expr))
+         (cond
+           [(procedure? first-val)
+            (apply first-val (make-params expr returned-value pos))
+            ]
+           [else first-val]
+           )
          )
-       )
-     ]
-    ; トークン列の最初が無名関数、または正規表現オブジェクトの場合
-    ;   引数があれば実行。引数がなければ else パートに飛びオブジェクトと見なす
-    [(or (and (_lambda? (car expr)) (> (length expr) 1))
-       (and (_regexp? (car expr)) (> (length expr) 1)))
-     (let1 first-val (value (car expr))
-       (apply first-val (make-params expr returned-value pos))
-       )
-     ]
-    ; 直前の処理の戻り値をそのまま処理対象ワードをして扱う場合 (this構文)
-    [(_this? (car expr))
-     (when (! eq? *nil-returned-value* returned-value)
-       (apply returned-value (make-params expr *nil-returned-value* pos))
-       )
-     ]
-    ; 戻り値のパラメータへの挿入場所指定がある場合
-    [(_pipe-pos? (car expr))
-     (when (! eq? *nil-returned-value* returned-value)
-       (execute (cdr expr) returned-value (value (car expr)))
-       )
-     ]
-    ; トークン列の最初がそれ以外（数字・文字列など）の場合
-    [else 
-      (value (car expr))
-      ]
+       ]
+      ; トークン列の最初が無名関数、または正規表現オブジェクトの場合
+      ;   引数があれば実行。引数がなければ else パートに飛びオブジェクトと見なす
+      [(or (and (_lambda? first-token) (> (length expr) 1))
+         (and (_regexp? first-token) (> (length expr) 1)))
+       (let1 first-val (value first-token)
+         (apply first-val (make-params expr returned-value pos))
+         )
+       ]
+      ; 直前の処理の戻り値をそのまま処理対象ワードをして扱う場合 (this構文)
+      [(_this? first-token)
+       (when (! eq? *nil-returned-value* returned-value)
+         (apply returned-value (make-params expr *nil-returned-value* pos))
+         )
+       ]
+      ; 戻り値のパラメータへの挿入場所指定がある場合
+      [(_pipe-pos? first-token)
+       (when (! eq? *nil-returned-value* returned-value)
+         (execute (cdr expr) returned-value (value first-token))
+         )
+       ]
+      ; トークン列の最初がそれ以外（数字・文字列など）の場合
+      [else 
+        (value first-token)
+        ]
+      )
     )
   )
 
@@ -123,10 +126,10 @@
   (define returned-value *nil-returned-value*)
   (for-each
     (lambda (expr)
-      (debug "* parsing token\n  " expr)
+      (debug 3 "* parsing token\n  " expr)
       (let1 _return (execute expr returned-value '())
         (set! returned-value _return)
-        (debug "* set returned value = " _return " -- " each-pipe-token)
+        (debug 3 "* set returned value = " _return " -- " each-pipe-token)
         )
       )
     each-pipe-token)

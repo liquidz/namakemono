@@ -10,8 +10,11 @@
 (require "./src/parser")
 
 ;(define *debug* #t)
-(define *debug* #f)
-(define (debug . str) (if *debug* (apply print str)))
+(define *debug* 0)
+(define (debug level . str)
+  ;(print "level = " level " / *debug* = " *debug*)
+  (when (<= level *debug*) (apply print str))
+  )
 
 ; =init
 ; -----------------------
@@ -24,7 +27,7 @@
     *words*)
 
   ; library
-  (if (not *debug*) (for-each load-source (collect-library *library-path*)))
+  (for-each load-source (collect-library *library-path*))
   )
 
 ; =del-tab
@@ -36,15 +39,15 @@
 ; =run-tokens
 ; ------------------
 (define (run-tokens all-tokens)
-  (debug "* all tokens\n  " all-tokens)
+  (debug 4 "* all tokens\n  " all-tokens)
   (fold
     (lambda (each-line-token last-result)
       (let1 each-pipe-token (list-split each-line-token (lambda (x) (eq? (car x) :pipe)))
         (cond
           [(! null? each-pipe-token)
-           (debug "* each pipe token\n  " each-pipe-token)
+           (debug 4 "* each pipe token\n  " each-pipe-token)
            (let1 res (parser each-pipe-token)
-             (debug "")
+             (debug 4 "")
              res
              )
            ]
@@ -124,31 +127,24 @@
 ; ---------------
 (define (main args)
   (let-args (cdr args)
-    ((debug "d|debug")
+    ((debug "d|debug=i" 0)
      . rest-args
      )
+
+    ; initialize
+    (namakemono-initialize)
+
+    (set! *debug* debug)
 
     (case (length rest-args)
       ; command line mode
       [(0)
        (print "namakemono " *nmk-version*)
-       (display "* initializing..") (flush)
-       ; initialize
-       (namakemono-initialize)
-       (print "ok")
-
-       (if debug (set! *debug* #t))
-
        (command-line-environment)
        ]
 
       ; file execute mode
       [(1)
-       ; initialize
-       (namakemono-initialize)
-
-       (if debug (set! *debug* #t))
-
        ; load and run source
        (load-source (car rest-args))
        ]

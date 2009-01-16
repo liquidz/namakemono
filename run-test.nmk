@@ -76,7 +76,16 @@ pr "* simple lambda test"
 = 1 1 . if ,pr 'passed',,pr 'ng',
 nl
 
+; ===================================
+
 pr "* ldef test"
 let 'a' 2 'b' 3 'c' 4 [
 	+ a b c . = 9 . if "passed" "ng" . pr . nl
 ]
+
+; ===================================
+
+pr "* overload test"
+def 'ol-check' [(x) + x 2]
+def 'ol-check' [(x y) + x y]
+and [ol-check 3 . = 5] [ol-check 3 4 . = 7] . if "passed" "ng" . pr . nl

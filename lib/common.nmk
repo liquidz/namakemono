@@ -6,12 +6,12 @@ def 'nl' [ pr '' ]
 
 ; condition
 ; ---------------------------------------------
-def 'when' [(when-func cond)
-	if when-func emp cond
+def 'when' [(when-func when-cond)
+	if when-func emp when-cond
 ]
 
-def 'unless' [(unless-func cond)
-	! cond . when unless-func
+def 'unless' [(unless-func unless-cond)
+	! unless-cond . when unless-func
 ]
 
 ; list

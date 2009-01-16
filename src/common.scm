@@ -10,6 +10,36 @@
 (define *implicit-variable-word* (list :word (make-keyword *implicit-variable*)))
 (define *library-path* "./lib")
 (define *nil* 'nmk-nil)
+(define *get-lambda-params-length* :get-lambda-params)
+
+(define-class <overloaded-function> ()
+  ((table :init-keyword :hs :init-value (make-hash-table-wrap)))
+  )
+
+(define (overloaded-function? obj)
+  (eq? <overloaded-function> (class-of obj))
+  )
+
+(define-syntax nmk-lambda
+  (syntax-rules (<>)
+    [(_ params expr ...)
+     (lambda <>
+       (cond
+         [(and (not (null? <>)) (eq? (car <>) *get-lambda-params-length*))
+          (let1 params-ls '(params)
+            (if (list? (car params-ls)) (length (car params-ls)) 1)
+            )
+          ]
+         [else
+           (receive params (apply values <>)
+             expr ...
+             )
+           ]
+         )
+       )
+     ]
+    )
+  )
 
 ; =word?
 ; --------------
@@ -84,49 +114,130 @@
 
 ; =_get-local-variable
 ; --------------------
-(define (_get-local-variable key)
+(define (_get-local-variable key params)
+  (let1 ns (*local-namespace* *current-uid*)
+    (cond
+      [(ns '() 'exists? key)
+       (let1 tmp (ns key)
+         ;(if (hash-table-wrap? tmp)
+         (if (overloaded-function? tmp)
+           (if ((slot-ref tmp 'table) '() 'exists? (length params))
+             ((slot-ref tmp 'table) (length params))
+             (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
+             )
+           tmp
+           )
+         )
+       ]
+      [else
+        (_get-global-variable key params)
+        ]
+      )
+
+    )
+  #|
   (let1 ns (*local-namespace* *current-uid*)
     (cond
       [(ns '() 'exists? key) (ns key)]
-      [else (_get-global-variable key)]
+      [else (_get-global-variable key params)]
       )
     )
+  |#
   )
 
 ; =_get-global-variable
 ; ------------------------
-(define (_get-global-variable key)
+(define (_get-global-variable key params)
+  (cond
+    [(*global-namespace* '() 'exists? key)
+     (let1 tmp (*global-namespace* key)
+       (if (overloaded-function? tmp)
+         (if ((slot-ref tmp 'table) '() 'exists? (length params))
+           ((slot-ref tmp 'table) (length params))
+           (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
+           )
+         tmp
+         )
+       )
+     ]
+    [else
+      (error "do not found variable" "key = " key " / uid = " *current-uid*)
+      ]
+    )
+  #|
   (if (*global-namespace* '() 'exists? key)
     (*global-namespace* key)
     (error "do not found variable" "key = " key " / uid = " *current-uid*)
     )
+  |#
   )
 
 ; =get-variable
 ; ----------------
-(define (get-variable key)
+(define (get-variable key . params)
   (cond
     [(*local-namespace* '() 'exists? *current-uid*)
-     (_get-local-variable key)
+     (if (null? params)
+       (_get-local-variable key '())
+       (_get-local-variable key (car params))
+       )
      ]
     [else
-      (_get-global-variable key)
+      (if (null? params)
+        (_get-global-variable key '())
+        (_get-global-variable key (car params))
+        )
       ]
+    )
+  )
+
+(define (get-lambda-params-length fn)
+  (guard (e (else 1))
+    (let1 res (fn *get-lambda-params-length*)
+      res
+      )
     )
   )
 
 ; =set-variable
 ; ----------------------
-(define (set-variable key value . uid)
-  ;(print "================= set(" *current-uid* "): " key " = " value)
-  (let1 target-uid (if (null? uid) *current-uid* (car uid))
-    (cond
-      [(*local-namespace* '() 'exists? target-uid)
-       ((*local-namespace* target-uid) key value)
-       ]
-      [else
-        (*global-namespace* key value)
-        ]
+(define (set-variable key value . options)
+  (let-keywords options ((target-uid :uid *current-uid*)
+                         (overload :overload #f)
+                         )
+    (let1 target-namespace (if (*local-namespace* '() 'exists? target-uid)
+                             (*local-namespace* target-uid)
+                             *global-namespace*)
+      (if (not overload)
+        (target-namespace key value)
+        (cond
+          [(target-namespace '() 'exists? key)
+           (let1 tmp (target-namespace key)
+             (cond
+               [(overloaded-function? tmp)
+                ; 既にオーバーロードされている場合
+                ((slot-ref tmp 'table) (get-lambda-params-length value) value)
+                ]
+               [(procedure? tmp)
+                (let1 olf (make <overloaded-function>)
+                  ((slot-ref olf 'table) (get-lambda-params-length tmp) tmp)
+                  ((slot-ref olf 'table) (get-lambda-params-length value) value)
+                  (target-namespace key olf)
+                  )
+                ]
+               [else
+                 ; 関数じゃないなら上書き
+                 (target-namespace key value)
+                 ]
+               )
+             )
+           ]
+          [else
+            ; 未定義の場合は普通に定義
+            (target-namespace key value)
+            ]
+          )
+        )
       )
     )
   )
