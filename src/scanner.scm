@@ -385,14 +385,12 @@
            (loop (del-head-space (string-drop code 4)) (cons (list :this '()) res))
            ]
           ; number
-          ;[(#/^[\ \t]*(\-?[0-9]+([\.\/]([0-9]+))?)[\ \t]*/ code)
           [(#/^(\-?[0-9]+([\.\/]([0-9]+))?)[\ \t]*/ code)
            => (lambda (m)
                 (loop (m 'after) (cons (list :number (string->number (m 1))) res))
                 )
            ]
           ; word
-          ;[(#/^[\ \t]*([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)[\ \t]*/ code)
           [(#/^([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)[\ \t]*/ code)
            => (lambda (m)
                 (loop (m 'after) (cons (list :word (make-keyword (m 1))) res))
