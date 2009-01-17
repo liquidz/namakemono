@@ -86,6 +86,6 @@ let 'a' 2 'b' 3 'c' 4 [
 ; ===================================
 
 pr "* overload test"
-def 'ol-check' [(x) + x 2]
-def 'ol-check' [(x y) + x y]
-and [ol-check 3 . = 5] [ol-check 3 4 . = 7] . if "passed" "ng" . pr . nl
+def 'ol-check' [(*x) apply + x]
+def 'ol-check' [(x y) - x y]
+and [ol-check 1 2 3 . = 6] [ol-check 4 3 . = 1] . if "passed" "ng" . pr . nl

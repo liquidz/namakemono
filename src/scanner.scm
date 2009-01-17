@@ -2,6 +2,7 @@
 (define *lf* #/\\n/)
 
 ; =mymin
+;  数字以外があっても最小値を算出
 ; ---------------------------
 (define (mymin . args)
   (if (> (length args) 0)
@@ -22,6 +23,7 @@
   )
 
 ; =correct-escape-sequence
+;   \n などの文字列を適切なエスケープシーケンスに変換する
 ; ---------------------------
 (define (correct-escape-sequence str)
   (let loop((ls (string->list str)) (flag #f) (res '()))
@@ -138,7 +140,8 @@
   )
 
 ; =get-correct-end
-; ----------------------
+;  対応する文字列（括弧など)を検索し、そこまでの文字列を返す
+; ---------------------------------------------------------
 (define (get-correct-end original-code original-start-str original-end-str)
   (let ((start-find-regexp (string->regexp #`".*?,|original-start-str|"))
         (end-find-regexp (string->regexp #`"(.*?),|original-end-str|"))
@@ -185,11 +188,17 @@
           [else
             (error "lambda parameter" "original-code = " original-ode)
             ]
-;            'lambda-parameter-error]
           )
 
         )
       )
+    )
+  )
+
+(define (count-make-lambda-params param)
+  (if (char=? #\* (string-ref (keyword->string (value (last param))) 0))
+    -1
+    (length param)
     )
   )
 
@@ -205,7 +214,10 @@
           (lambda p
             (cond
               [(and (! null? p) (eq? (car p) *get-lambda-params-length*))
-               (length param)
+               ; この場合だけは特別にパラメータ数を返す
+               ; （オーバーロード用）
+               (count-make-lambda-params param)
+               ;(length param)
                ]
               [else
                 (let ((uid (make-uid))

@@ -12,14 +12,18 @@
 (define *nil* 'nmk-nil)
 (define *get-lambda-params-length* :get-lambda-params)
 
+; =overloaded-function
 (define-class <overloaded-function> ()
   ((table :init-keyword :hs :init-value (make-hash-table-wrap)))
   )
 
+; =overloaded-function?
+; ----------------------
 (define (overloaded-function? obj)
-  (eq? <overloaded-function> (class-of obj))
-  )
+  (eq? <overloaded-function> (class-of obj)))
 
+; =nmk-lambda
+; ----------------------
 (define-syntax nmk-lambda
   (syntax-rules (<>)
     [(_ params expr ...)
@@ -44,25 +48,21 @@
 ; =word?
 ; --------------
 (define (_word? x) (eq? (car x) :word))
-
 ; =regexp?
 ; -------------
 (define (_regexp? x) (eq? (car x) :regexp))
-
 ; =lambda?
 ; -----------------
 (define (_lambda? x) (eq? (car x) :lambda))
-
-;(define (_redirect? x) (eq? (car x) :redirect))
+; =this?
+; -----------------------
 (define (_this? x) (eq? (car x) :this))
-
+; =pipe-pos?
+; ------------------
 (define (_pipe-pos? x) (eq? (car x) :pipe-pos))
-
-
 ; =value
 ; ---------------
 (define (value x) (cadr x))
-
 
 ; =make-uid
 ; -------------
@@ -119,11 +119,15 @@
     (cond
       [(ns '() 'exists? key)
        (let1 tmp (ns key)
-         ;(if (hash-table-wrap? tmp)
          (if (overloaded-function? tmp)
+           ; オーバーロードされてる場合は引数の数から関数を探す
            (if ((slot-ref tmp 'table) '() 'exists? (length params))
              ((slot-ref tmp 'table) (length params))
-             (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
+             ; 可変長のパラメータを持つ関数がないか確認
+             (if ((slot-ref tmp 'table) '() 'exists? -1)
+               ((slot-ref tmp 'table) -1)
+               (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
+               )
              )
            tmp
            )
@@ -133,16 +137,7 @@
         (_get-global-variable key params)
         ]
       )
-
     )
-  #|
-  (let1 ns (*local-namespace* *current-uid*)
-    (cond
-      [(ns '() 'exists? key) (ns key)]
-      [else (_get-global-variable key params)]
-      )
-    )
-  |#
   )
 
 ; =_get-global-variable
@@ -152,9 +147,14 @@
     [(*global-namespace* '() 'exists? key)
      (let1 tmp (*global-namespace* key)
        (if (overloaded-function? tmp)
+         ; オーバーロードされてる場合は引数の数から関数を探す
          (if ((slot-ref tmp 'table) '() 'exists? (length params))
            ((slot-ref tmp 'table) (length params))
-           (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
+           ; 可変長のパラメータを持つ関数がないか確認
+           (if ((slot-ref tmp 'table) '() 'exists? -1)
+             ((slot-ref tmp 'table) -1)
+             (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
+             )
            )
          tmp
          )
@@ -164,12 +164,6 @@
       (error "do not found variable" "key = " key " / uid = " *current-uid*)
       ]
     )
-  #|
-  (if (*global-namespace* '() 'exists? key)
-    (*global-namespace* key)
-    (error "do not found variable" "key = " key " / uid = " *current-uid*)
-    )
-  |#
   )
 
 ; =get-variable
@@ -191,6 +185,8 @@
     )
   )
 
+; =get-lambda-params-length
+; -----------------------------
 (define (get-lambda-params-length fn)
   (guard (e (else 1))
     (let1 res (fn *get-lambda-params-length*)
@@ -219,6 +215,7 @@
                 ((slot-ref tmp 'table) (get-lambda-params-length value) value)
                 ]
                [(procedure? tmp)
+                ; 新たにオーバーロードする場合
                 (let1 olf (make <overloaded-function>)
                   ((slot-ref olf 'table) (get-lambda-params-length tmp) tmp)
                   ((slot-ref olf 'table) (get-lambda-params-length value) value)

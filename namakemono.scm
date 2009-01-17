@@ -123,11 +123,18 @@
     )
   )
 
+; =version-print
+; -----------------
+(define (version-print)
+  (print "namakemono " *nmk-version*)
+  )
+
 ; =main
 ; ---------------
 (define (main args)
   (let-args (cdr args)
     ((debug "d|debug=i" 0)
+	 (version "v|version")
      . rest-args
      )
 
@@ -139,7 +146,10 @@
     (case (length rest-args)
       ; command line mode
       [(0)
-       (print "namakemono " *nmk-version*)
+	   (when version
+			 (version-print)
+			 (exit)
+			 )
        (command-line-environment)
        ]
 
