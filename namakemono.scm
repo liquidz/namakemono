@@ -12,7 +12,6 @@
 ;(define *debug* #t)
 (define *debug* 0)
 (define (debug level . str)
-  ;(print "level = " level " / *debug* = " *debug*)
   (when (<= level *debug*) (apply print str))
   )
 
@@ -35,6 +34,70 @@
 (define (del-tab str)
   (regexp-replace-all* str #/[\t]/ "")
   )
+
+; =apply-macro
+; ------------------
+#|
+(define (apply-macro tokens)
+  (let* ((token-len (length tokens))
+         (mns (*macro-namespace* (value (car tokens))))
+         )
+    (let1 target-macro (if (mns '() 'exists? token-len)
+                         (mns token-len)
+                         (if (mns '() 'exists? -1) (mns -1) #f)
+                         )
+      (cond
+        [target-macro
+          (list-receive
+            (param body) target-macro
+
+            (let1 cls (let loop((n 0) (res '()))
+                        (cond
+                          [(= n token-len)
+                           (r res)
+                           ]
+                          [else
+                            (if (char=? #\* (string-ref (keyword->string (value (list-ref param n))) 0))
+                              (r cons (drop tokens n) res)
+                              (loop (++ n) (cons (list-ref tokens n) res))
+                              )
+                            ]
+                          )
+                        )
+              (debug 8 "cls = " cls)
+              (let1 final-res (r fold
+                                 (lambda (x res)
+                                   (let1 index (list-index (lambda (t) (eq? (value x) (value t))) param)
+                                     (if index
+                                       ; 対応するパラメータがある場合
+                                       (if (char=? #\* (string-ref (keyword->string (value x)) 0))
+                                         ; 可変長のパラメータの場合、ちゃんと実行できるようにリストから取り出す
+                                         (fold (lambda (y z) (cons y z)) res (list-ref cls index))
+                                         ; 固定長の場合はそのまま結果にポンっ
+                                         (cons (list-ref cls index) res)
+                                         )
+                                       ; 対応するパラメータがない場合はそのまま
+                                       (cons x res)
+                                       )
+                                     )
+                                   )
+                                 '()
+                                 body)
+                (debug 8 "final-res = " final-res)
+                final-res
+                )
+              )
+            )
+          ]
+        [else
+          tokens
+          ;each-pipe-token
+          ]
+        )
+      )
+    )
+  )
+|#
 
 ; =run-tokens
 ; ------------------
@@ -111,10 +174,12 @@
        (print "bye")
        ]
       [(! string=? input "")
-       (let1 res (run-source input)
-          (print res)
-          (loop (get-user-input))
-          )
+       (let1 res (guard (e (else "error"))
+                   (run-source input)
+                   )
+         (print res)
+         (loop (get-user-input))
+         )
        ]
       [else
         (loop (get-user-input))
@@ -134,7 +199,7 @@
 (define (main args)
   (let-args (cdr args)
     ((debug "d|debug=i" 0)
-	 (version "v|version")
+     (version "v|version")
      . rest-args
      )
 
@@ -146,10 +211,10 @@
     (case (length rest-args)
       ; command line mode
       [(0)
-	   (when version
-			 (version-print)
-			 (exit)
-			 )
+       (when version
+         (version-print)
+         (exit)
+         )
        (command-line-environment)
        ]
 
@@ -164,3 +229,4 @@
       )
     )
   )
+

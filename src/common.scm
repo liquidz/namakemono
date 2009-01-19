@@ -2,6 +2,7 @@
 
 (define *global-namespace* (make-hash-table-wrap))
 (define *local-namespace* (make-hash-table-wrap))
+;(define *macro-namespace* (make-hash-table-wrap))
 
 (define *id-count* 1)
 (define *current-uid* '())
@@ -51,6 +52,8 @@
 ; =regexp?
 ; -------------
 (define (_regexp? x) (eq? (car x) :regexp))
+; =regmatch?
+(define (_regmatch? x) (regmatch? (cadr x)))
 ; =lambda?
 ; -----------------
 (define (_lambda? x) (eq? (car x) :lambda))

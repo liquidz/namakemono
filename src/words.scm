@@ -2,6 +2,8 @@
 
 (define *empty-list* 'empty)
 
+(define *call/cc* (make-hash-table-wrap))
+
 (define *words*
   (list
     (list :true #t)
@@ -27,8 +29,8 @@
     (list :>= (nmk-lambda (x y) (>= x y)))
     (list :< (nmk-lambda (x y) (< x y)))
     (list :<= (nmk-lambda (x y) (<= x y)))
-    ;(list :file->list (lambda (filename) (file->list filename)))
-    (list :file (nmk-lambda (filename) (file->list filename)))
+    (list :file (nmk-lambda (filename) (file->string filename)))
+    (list :file->list (nmk-lambda (filename) (file->list filename)))
     ;(list :pr (lambda x (print 'omaeka?)(apply print x) (if (! null? x) (car x))))
     (list :pr (nmk-lambda x (apply print x) (if (! null? x) (car x))))
     (list :di (nmk-lambda x (for-each display x)))
@@ -37,8 +39,19 @@
     (list :string->regexp (nmk-lambda (str) (string->regexp str)))
     (list :string->list (nmk-lambda (str) (string->list str)))
     (list :string->number (nmk-lambda (str) (string->number str)))
+    (list :utf8 (nmk-lambda (str) (utf8 str)))
+    (list :sjis (nmk-lambda (str) (sjis str)))
+    (list :eucjp (nmk-lambda (str) (eucjp str)))
     (list :number->string (nmk-lambda (num) (number->string num)))
     (list :make-hash (nmk-lambda arg (make-hash-table-wrap)))
+    (list :call/cc (nmk-lambda (name fn) (call/cc (lambda (cc)
+                                                    (let1 key (make-keyword name)
+                                                      (*call/cc* key cc) (fn cc) (*call/cc* '() 'delete key)
+                                                      )))))
+    (list :jump (nmk-lambda (name . res) (when (*call/cc* '() 'exists? (make-keyword name))
+                                           (apply (*call/cc* (make-keyword name)) res))))
+    (list :sym (nmk-lambda (str) (string->symbol str)))
+    (list :http-get (nmk-lambda (url) (http-get url)))
     (list :if (nmk-lambda (ok ng pred)
                 (let1 target (if pred ok ng)
                   (cond

@@ -88,6 +88,9 @@
 (define (del-head-crlf target-str)
   (del-head-words target-str #\return #\newline)
   )
+(define (del-head-space-crlf target-str)
+  (del-head-words target-str #\space #\tab #\return #\newline)
+  )
 ; =pickup
 ; --------------
 (define (pickup ls start end)
@@ -132,6 +135,16 @@
     (if n (= n 0) #f)
     )
   )
+
+; =defmac?
+; -------------------------
+#|
+(define (defmac? code)
+  (let1 n (string-scan code "defmac")
+    (if n (= n 0) #f)
+    )
+  )
+|#
 
 ; =has-flexible-length-argument?
 ; --------------------------------
@@ -186,7 +199,7 @@
              )
            ]
           [else
-            (error "lambda parameter" "original-code = " original-ode)
+            (error "cannot find correct end" "original-code = " original-code)
             ]
           )
 
@@ -401,6 +414,47 @@
            ; 4 is length of 'this'
            (loop (del-head-space (string-drop code 4)) (cons (list :this '()) res))
            ]
+          ; def-mac syntax
+          #|
+          [(defmac? code)
+           (let* ((m (#/^defmac[\ \t]*[\"\'](.+?)[\"\'][\ \t]*\[/ code))
+                  (title (m 1))
+                  (original-body (get-correct-end (m 'after) "\\[" "\\]"))
+                  )
+             (let dm-loop((tmp (del-head-crlf original-body)) (dm-res '()))
+               (cond
+                 [(string=? tmp "")
+                  ; macroに登録
+                  (let1 title-key (make-keyword title)
+                    (*macro-namespace* title-key (make-hash-table-wrap))
+                    (let1 mns (*macro-namespace* title-key)
+                      (for-each
+                        (lambda (x)
+                          (mns (count-make-lambda-params (list-ref x 0))
+                               (list (list-ref x 0) (list-ref x 1)))
+                          )
+                        dm-res)
+                      )
+                    (loop (del-head-space (string-drop (m 'after) (+ (string-length original-body) 1))) res)
+                    )
+                  ]
+                 [else
+                   (let* ((macro-body (get-correct-end (string-drop tmp 1) "\\[" "\\]"))
+                          (m (#/[\ \t]*\((.+?)\)/ macro-body))
+                          (param (m 1))
+                          (body (trim (m 'after)));(del-head-space-crlf (m 'after)))
+                          )
+                     ; "+ 2" は先頭の"["と末尾の"]"の分
+                     (dm-loop (del-head-space-crlf (string-drop tmp (+ (string-length macro-body) 2)))
+                              (cons (list (scanner param) (scanner body)) dm-res)
+                              )
+                     )
+                   ]
+                 )
+               )
+             )
+           ]
+          |#
           ; number
           [(#/^(\-?[0-9]+([\.\/]([0-9]+))?)[\ \t]*/ code)
            => (lambda (m)

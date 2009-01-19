@@ -14,6 +14,10 @@ def 'unless' [(unless-func unless-cond)
 	! unless-cond . when unless-func
 ]
 
+def '!=' [(_x_ _y_)
+	= _x_ _y_ . !
+]
+
 ; list
 ; ---------------------------------------------
 def '!' [(boolean)
@@ -37,6 +41,10 @@ def 'each' [(each-fun each-ls)
 		car each-ls . each-fun
 		cdr each-ls . each each-fun
 	]
+]
+
+def 'each-line' [(each-line-fun each-line-str)
+	/ each-line-str "\n" . each each-line-fun
 ]
 
 def 'fold' [(fold-fun fold-initial fold-ls)
@@ -190,4 +198,10 @@ def 'recv' [(*recv-args)
 		]
 		last recv-args . do
 	]
+]
+
+; etc
+; ---------------------------------------------
+def 'call/cc' [(call/cc-fn)
+	call/cc '_tmp_' call/cc-fn
 ]
