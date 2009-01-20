@@ -202,6 +202,6 @@ def 'recv' [(*recv-args)
 
 ; etc
 ; ---------------------------------------------
-def 'call/cc' [(call/cc-fn)
-	call/cc '_tmp_' call/cc-fn
+def 'call/cc' [(call/cc-abrv-fn)
+	call/cc '_tmp_' call/cc-abrv-fn
 ]

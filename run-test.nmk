@@ -40,6 +40,15 @@ arr 4 5 6 . each [
 
 ; ===================================
 
+pr "* regexp test"
+let1 'm' [#/l+/ "hello"] [
+	m . if [
+		and [m 0 . = "ll"] [sym "after" . m . = "o"] . if "passed" "ng"
+	] "ng" . pr . nl
+]
+
+; ===================================
+
 pr "* recursion test"
 def 'fact' [ (num)
 	= num 0 . if 1 [
@@ -89,3 +98,13 @@ pr "* overload test"
 def 'ol-check' [(*x) apply + x]
 def 'ol-check' [(x y) - x y]
 and [ol-check 1 2 3 . = 6] [ol-check 4 3 . = 1] . if "passed" "ng" . pr . nl
+
+; ===================================
+
+pr "* call/cc test"
+call/cc  [(cc)
+	arr 1 2 3 4 5 6 7 . fold [(x res)
+		= x 4 . when [cc res]
+		+ x res
+	] 0
+] . = 6 . if "passed" "ng" . pr . nl

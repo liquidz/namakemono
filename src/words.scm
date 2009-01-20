@@ -31,11 +31,9 @@
     (list :<= (nmk-lambda (x y) (<= x y)))
     (list :file (nmk-lambda (filename) (file->string filename)))
     (list :file->list (nmk-lambda (filename) (file->list filename)))
-    ;(list :pr (lambda x (print 'omaeka?)(apply print x) (if (! null? x) (car x))))
     (list :pr (nmk-lambda x (apply print x) (if (! null? x) (car x))))
     (list :di (nmk-lambda x (for-each display x)))
     (list :arr (nmk-lambda elems (if (and (= 1 (length elems)) (eq? *nil* (car elems))) '() (apply list elems))))
-    ;(list :match (lambda (regexp-str target-str) ((string->regexp regexp-str) target-str)))
     (list :string->regexp (nmk-lambda (str) (string->regexp str)))
     (list :string->list (nmk-lambda (str) (string->list str)))
     (list :string->number (nmk-lambda (str) (string->number str)))
@@ -44,47 +42,52 @@
     (list :eucjp (nmk-lambda (str) (eucjp str)))
     (list :number->string (nmk-lambda (num) (number->string num)))
     (list :make-hash (nmk-lambda arg (make-hash-table-wrap)))
-    (list :call/cc (nmk-lambda (name fn) (call/cc (lambda (cc)
-                                                    (let1 key (make-keyword name)
-                                                      (*call/cc* key cc) (fn cc) (*call/cc* '() 'delete key)
-                                                      )))))
+    (list :call/cc (nmk-lambda (name fn)
+                               (call/cc (lambda (cc)
+                                          (let1 key (make-keyword name)
+                                            (*call/cc* key cc)
+                                            (let1 res (fn cc)
+                                              (*call/cc* '() 'delete key)
+                                              res
+                                              )
+                                            )))))
     (list :jump (nmk-lambda (name . res) (when (*call/cc* '() 'exists? (make-keyword name))
                                            (apply (*call/cc* (make-keyword name)) res))))
     (list :sym (nmk-lambda (str) (string->symbol str)))
     (list :http-get (nmk-lambda (url) (http-get url)))
     (list :if (nmk-lambda (ok ng pred)
-                (let1 target (if pred ok ng)
-                  (cond
-                    [(procedure? target)
-                     ; 渡せる暗黙値があれば渡す
-                     (let1 implicit-val (guard (e (else 'nullxxx))
-                                          (get-variable (make-keyword *implicit-variable*))
-                                          )
-                       (target implicit-val)
-                       )
-                     ]
-                    [else target]
-                    )
-                  )
-                ))
+                          (let1 target (if pred ok ng)
+                            (cond
+                              [(procedure? target)
+                               ; 渡せる暗黙値があれば渡す
+                               (let1 implicit-val (guard (e (else 'nullxxx))
+                                                    (get-variable (make-keyword *implicit-variable*))
+                                                    )
+                                 (target implicit-val)
+                                 )
+                               ]
+                              [else target]
+                              )
+                            )
+                          ))
     (list :def (nmk-lambda (key value)
-                 (cond
-                   [(or (string? key) (symbol? key))
-                    (set-variable (make-keyword key) value :overload #t)]
-                   [(keyword? key)
-                    (set-variable key value :overload #t)]
-                   )
-                 ))
+                           (cond
+                             [(or (string? key) (symbol? key))
+                              (set-variable (make-keyword key) value :overload #t)]
+                             [(keyword? key)
+                              (set-variable key value :overload #t)]
+                             )
+                           ))
     (list :ldef (nmk-lambda (key value)
-                  (cond
-                    [(or (string? key) (symbol? key))
-                     (set-variable (make-keyword key) value :uid *last-uid* :overload #t)]
-                    [(keyword? key)
-                     (set-variable key value :uid *last-uid* :overload #t)]
-                    )
-                  ))
+                            (cond
+                              [(or (string? key) (symbol? key))
+                               (set-variable (make-keyword key) value :uid *last-uid* :overload #t)]
+                              [(keyword? key)
+                               (set-variable key value :uid *last-uid* :overload #t)]
+                              )
+                            ))
     (list :eval (nmk-lambda (src)
-                  (run-source src)
-                  ))
+                            (run-source src)
+                            ))
     )
   )

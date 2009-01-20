@@ -15,7 +15,11 @@
 
 ; =overloaded-function
 (define-class <overloaded-function> ()
-  ((table :init-keyword :hs :init-value (make-hash-table-wrap)))
+  ((table :init-value '()))
+  )
+(define-method initialize ((self <overloaded-function>) init-args)
+  (next-method)
+  (set! (slot-ref self 'table) (make-hash-table-wrap))
   )
 
 ; =overloaded-function?
@@ -32,7 +36,7 @@
        (cond
          [(and (not (null? <>)) (eq? (car <>) *get-lambda-params-length*))
           (let1 params-ls '(params)
-            (if (list? (car params-ls)) (length (car params-ls)) 1)
+            (if (list? (car params-ls)) (length (car params-ls)) -1)
             )
           ]
          [else
@@ -149,17 +153,21 @@
   (cond
     [(*global-namespace* '() 'exists? key)
      (let1 tmp (*global-namespace* key)
-       (if (overloaded-function? tmp)
-         ; オーバーロードされてる場合は引数の数から関数を探す
-         (if ((slot-ref tmp 'table) '() 'exists? (length params))
-           ((slot-ref tmp 'table) (length params))
-           ; 可変長のパラメータを持つ関数がないか確認
-           (if ((slot-ref tmp 'table) '() 'exists? -1)
-             ((slot-ref tmp 'table) -1)
-             (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
-             )
-           )
-         tmp
+       (cond
+         [(overloaded-function? tmp)
+          ; オーバーロードされてる場合は引数の数から関数を探す
+          (if ((slot-ref tmp 'table) '() 'exists? (length params))
+            ((slot-ref tmp 'table) (length params))
+            ; 可変長のパラメータを持つ関数がないか確認
+            (if ((slot-ref tmp 'table) '() 'exists? -1)
+              ((slot-ref tmp 'table) -1)
+              (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
+              )
+            )
+          ]
+         [else
+           tmp
+           ]
          )
        )
      ]
