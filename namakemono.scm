@@ -9,6 +9,8 @@
 (require "./src/scanner")
 (require "./src/parser")
 
+(define *library-path* "./lib")
+
 ; =init
 ; -----------------------
 (define (namakemono-initialize)
@@ -145,6 +147,7 @@
          (all-tokens (scanner code))
          )
     (run-tokens (collect-lambda all-tokens))
+    ;(run-tokens all-tokens)
     )
   )
 
@@ -221,12 +224,11 @@
              ]
 
             ; file execute mode
-            [(1)
-             ; load and run source
-             (load-source (car rest-args))
-             ]
             [else
-              (error "too many parameter error: " rest-args)
+              ; command-line parameter
+              (set-variable :*args* (cdr rest-args))
+              ; load and run source
+              (load-source (car rest-args))
               ]
             )
           ]

@@ -3,11 +3,14 @@ def 'do' [(do-fn)
 ]
 
 def 'recv' [(*recv-args)
-	let1 'recv-ls' [rev recv-args . cadr . do] [
+	last recv-args . [(recv-ls)
 		len recv-ls .1. for 0 ++ [(n)
-			ref n recv-args . def '_key'
-			ref n recv-ls . ldef _key
+			ref n recv-args . [(_key)
+				ref n recv-ls . ldef _key
+			]
 		]
-		last recv-args . do
+		rev recv-args . cadr . [(tmp)
+			fun? tmp . when tmp
+		]
 	]
 ]

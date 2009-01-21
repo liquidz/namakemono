@@ -1,3 +1,7 @@
+def 'if' [(ok-part pred)
+	if ok-part false pred
+]
+
 def 'when' [(when-func when-cond)
 	if when-func emp when-cond
 ]

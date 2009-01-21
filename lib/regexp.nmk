@@ -1,3 +1,7 @@
 def 'match' [(match-base match-reg-str)
 	string->regexp match-reg-str . this match-base
 ]
+
+def 'regexp-after' [(m)
+	sym 'after' . m
+]

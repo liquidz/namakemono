@@ -1,3 +1,7 @@
 def 'call/cc' [(call/cc-abrv-fn)
 	call/cc '_tmp_' call/cc-abrv-fn
 ]
+
+def 'has-args?' [
+	len *args* .0. > 0
+]

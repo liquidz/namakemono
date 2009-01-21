@@ -257,7 +257,9 @@
     (cond
       ; トークン列の最初が関数や変数の場合
       [(_word? first-token)
-       (let1 first-val (get-variable (value first-token) (cdr expr))
+       (let1 first-val (get-variable (value first-token) (if (eq? returned-value *nil-returned-value*)
+                                                           (cdr expr)
+                                                           (cons returned-value (cdr expr))))
          (cond
            ; 関数の場合は無条件で実行
            ; 正規表現の結果セットの場合は引数(または前の関数の戻り値)があれば実行
@@ -274,8 +276,8 @@
        ]
       ; トークン列の最初が無名関数、または正規表現オブジェクトの場合
       ;   引数があれば実行。引数がなければ else パートに飛びオブジェクトと見なす
-      [(or (and (_lambda? first-token) (> (length expr) 1))
-         (and (_regexp? first-token) (> (length expr) 1)))
+      [(or (and (_lambda? first-token) (or (> (length expr) 1) (! eq? returned-value *nil-returned-value*)))
+         (and (_regexp? first-token) (or (> (length expr) 1) (! eq? returned-value *nil-returned-value*))))
        (let1 first-val (value first-token)
          (apply first-val (make-params expr returned-value pos))
          )
@@ -309,24 +311,11 @@
 
   (for-each
     (lambda (expr)
-      #|
-      (cond
-        [(*macro-namespace* '() 'exists? (value (car expr)))
-         (let1 _return (parser (list-split (apply-macro expr) (lambda (x) (eq? (car x) :pipe))) returned-value)
-           (set! returned-value _return)
-           )
-         ]
-        [else
-          |#
-          (debug 3 "* parsing token\n  " expr)
-          (let1 _return (execute expr returned-value '())
-            (set! returned-value _return)
-            (debug 3 "* set returned value = " _return " -- " each-pipe-token)
-            )
-          #|
-          ]
+      (debug 3 "* parsing token\n  " expr)
+      (let1 _return (execute expr returned-value '())
+        (set! returned-value _return)
+        (debug 3 "* set returned value = " _return " -- " each-pipe-token)
         )
-      |#
       )
     each-pipe-token)
 

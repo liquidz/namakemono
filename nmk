@@ -1,4 +1,4 @@
 #!/bin/sh
 
-gosh namakemono.scm $@
+gosh /home/masa/gosh/namakemono/namakemono.scm $@
 

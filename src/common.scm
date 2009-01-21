@@ -1,4 +1,4 @@
-(define *nmk-version* "0.12")
+(define *nmk-version* "0.15")
 
 (define *debug* 0)
 
@@ -11,7 +11,6 @@
 (define *last-uid* '())
 (define *implicit-variable* "_")
 (define *implicit-variable-word* (list :word (make-keyword *implicit-variable*)))
-(define *library-path* "./lib")
 (define *nil* 'nmk-nil)
 (define *get-lambda-params-length* :get-lambda-params)
 
@@ -234,9 +233,12 @@
                 ]
                [(procedure? tmp)
                 ; 新たにオーバーロードする場合
+                (debug 3 "* make overloaded function: " key)
                 (let1 olf (make <overloaded-function>)
                   ((slot-ref olf 'table) (get-lambda-params-length tmp) tmp)
+                  (debug 3 "  * add " key " (len = " (get-lambda-params-length tmp) ")")
                   ((slot-ref olf 'table) (get-lambda-params-length value) value)
+                  (debug 3 "  * add " key " (len = " (get-lambda-params-length value) ")")
                   (target-namespace key olf)
                   )
                 ]

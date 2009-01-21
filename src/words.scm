@@ -9,6 +9,7 @@
     (list :true #t)
     (list :false #f)
     (list :ver *nmk-version*)
+    (list :exit (nmk-lambda (x) (exit)))
     (list :cons (nmk-lambda (x y) (cons x y)))
     (list :car (nmk-lambda (ls) (car ls)))
     (list :cdr (nmk-lambda (ls) (cdr ls)))

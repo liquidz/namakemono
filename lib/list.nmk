@@ -10,16 +10,27 @@ def 'caddr' [(cadr-ls)
 	cdr cadr-ls .cdr .car
 ]
 
+def 'first' car
+def 'second' cadr
+def 'third' caddr
+
 def 'last' [(last-ls)
 	rev last-ls . car
 ]
 
 def 'each' [(each-fun each-ls)
-	null? each-ls . unless [
-		car each-ls . each-fun
-		cdr each-ls . each each-fun
+	call/cc '_break_' [
+		null? each-ls . unless [
+			call/cc '_next_' [
+				car each-ls. each-fun
+			]
+			cdr each-ls . each each-fun
+		]
 	]
 ]
+
+def 'break' [ jump '_break_' ]
+def 'next' [ jump '_next_' ]
 
 def 'each-line' [(each-line-fun each-line-str)
 	/ each-line-str "\n" . each each-line-fun
@@ -27,7 +38,7 @@ def 'each-line' [(each-line-fun each-line-str)
 
 def 'fold' [(fold-fun fold-initial fold-ls)
 	null? fold-ls . if fold-initial [
-		let1 '_fold-res' [car fold-ls .0. fold-fun fold-initial] [
+		car fold-ls .0. fold-fun fold-initial . [(_fold-res)
 			cdr fold-ls . fold fold-fun _fold-res
 		]
 	]

@@ -1,3 +1,13 @@
+def 'makestr' [(c num)
+	= num 1 . if [
+		c
+	] [
+		str-ref c 0 . + c . [(_tmp)
+			-- num . makestr _tmp
+		]
+	]
+]
+
 def 'str-ref' [(sref-str sref-n)
 	string->list sref-str . ref sref-n
 ]
@@ -11,4 +21,8 @@ def 'list->string' [(l-s-ls)
 def 'substr' [(str s e)
 	- e s . + 1 . def '_tmp'
 	string->list str . drop s . take _tmp . list->string
+]
+
+def 'strlen' [(str)
+	string->list str . len
 ]
