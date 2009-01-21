@@ -1,0 +1,4 @@
+#!/bin/sh
+
+gosh @NMK_PATH@/namakemono.scm $@
+
