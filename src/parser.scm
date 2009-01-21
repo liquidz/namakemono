@@ -35,6 +35,181 @@
     )
   )
 
+; =has-flexible-length-argument?
+; --------------------------------
+(define (has-flexible-length-argument? arg-ls)
+  (char=? (string-ref (keyword->string (cadr (last arg-ls))) 0) #\*)
+  )
+; =count-make-lambda-params
+; ---------------------------
+(define (count-make-lambda-params param)
+  (if (char=? #\* (string-ref (keyword->string (value (last param))) 0))
+    -1
+    (length param)
+    )
+  )
+; =make-lambda
+; ----------------------
+(define (make-lambda param body)
+  (let1 flexible-arg (has-flexible-length-argument? param)
+    (debug 2 "* lambda: param = " param ", body = " body)
+    (lambda p
+      (cond
+        [(and (! null? p) (eq? (car p) *get-lambda-params-length*))
+         ; この場合だけは特別にパラメータ数を返す
+         ; （オーバーロード用）
+         (count-make-lambda-params param)
+         ;(length param)
+         ]
+        [else
+          (let ((uid (make-uid))
+                (last-uid *current-uid*))
+            (change-current-uid uid)
+
+            (make-local-namespace uid)
+            (take-over-variables last-uid uid)
+
+            (cond
+              ; 可変長の引数の場合
+              [flexible-arg
+                ; register temporary variable
+                (block
+                  _break
+                  (dotimes (n (length p))
+                    (let* ((var-name (value (list-ref param n)))
+                           (s-var-name (keyword->string var-name)))
+                      (cond
+                        [(char=? (string-ref s-var-name 0) #\*)
+                         (set-variable
+                           (make-keyword
+                             ; 先頭の*は抜かす
+                             (my-string-drop s-var-name 1))
+                           (drop p n))
+                         ; 残りのパラメータは全て１つの引数に登録されたので
+                         ;  for-each を抜ける
+                         (_break)
+                         ]
+                        [else
+                          (set-variable var-name (list-ref p n))
+                          ]
+                        )
+                      )
+                    )
+                  )
+
+                ; execute
+                (let1 result (run-tokens body)
+                  ; delete temporary variables
+                  (delete-local-namespace uid)
+                  (change-current-uid last-uid)
+
+                  result
+                  )
+                ]
+              ; 固定長の引数の場合
+              [else
+                (cond
+                  [(= (length p) (length param))
+                   ; register temporary variable
+                   (for-each
+                     (lambda (n)
+                       (set-variable (value (list-ref param n)) (list-ref p n))
+                       )
+                     (iota (length p) 0))
+
+                   (let1 result (run-tokens body)
+                     ; delete temporary variables
+                     (delete-local-namespace uid)
+                     (change-current-uid last-uid)
+
+                     result
+                     )
+                   ]
+                  [else
+                    (change-current-uid last-uid)
+                    (error "lambda parameter error:"  'required (length p)  'got (length param))
+                    ]
+                  )
+                ]
+              )
+            )
+          ])
+      )
+    )
+  )
+
+; =parse-lambda
+(define (parse-lambda ls)
+  (cond
+    [(null? ls) (error "parsing lambda error: body is empty") ]
+    [else
+      (receive (param body) (if (eq? (caar ls) :parameter-start)
+                              (let1 index (list-index (lambda (x) (eq? (car x) :parameter-end)) ls)
+                                (if index
+                                  (values (pickup ls 1 (-- index)) (drop ls (++ index)))
+                                  (error "parsing lambda error: parameter is not closed" ls)
+                                  )
+                                )
+                              (values (scanner *implicit-variable*) ls)
+                              )
+        ;(print "    param = " param)
+        ;(print "    body = " body)
+        (make-lambda param (collect-lambda body))
+        )
+      ]
+    )
+  )
+
+; =get-correct-end
+; -----------------------
+(define (get-correct-end scanned-ls start-key end-key)
+  (let loop((ls scanned-ls) (num 0) (level 0))
+    (if (null? ls) (error "dameda!")
+      (let1 first-token (caar ls)
+        (cond
+          [(eq? first-token start-key)
+           (loop (cdr ls) (++ num) (++ level))
+           ]
+          [(eq? first-token end-key)
+           (if (= (-- level) 0) num
+             (loop (cdr ls) (++ num) (-- level))
+             )
+           ]
+          [else
+            (loop (cdr ls) (++ num) level)
+            ]
+          )
+        )
+      )
+    )
+  )
+
+; =collect-lambda
+; --------------------------
+(define (collect-lambda scanned-ls)
+  (let1 len (length scanned-ls)
+    (let loop((index 0) (res '()))
+      (if (= len index) (r res)
+        (let1 first-token (list-ref scanned-ls index)
+          (cond
+            [(eq? (car first-token) :lambda-start)
+             (let1 end (get-correct-end (drop scanned-ls index) :lambda-start :lambda-end)
+               ; 先頭のlambda-startと終わりのlambda-endは抜かしてtarget-lsとする
+               (let1 target-ls (pickup scanned-ls (++ index) (+ index end -1))
+                 ; 終わりのlambda-endの次から始めたいので + 1
+                 (loop (+ index end 1) (cons (list :lambda (parse-lambda target-ls)) res))
+                 )
+               )
+             ]
+            [else
+              (loop (++ index) (cons first-token res))
+              ]
+            )
+          )
+        )
+      )
+    )
+  )
 
 ; =make-params
 ;   @position:

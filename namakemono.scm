@@ -144,7 +144,7 @@
   (let* ((code (del-tab (trim source-code)))
          (all-tokens (scanner code))
          )
-    (run-tokens all-tokens)
+    (run-tokens (collect-lambda all-tokens))
     )
   )
 
