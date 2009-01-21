@@ -1,0 +1,31 @@
+def 'logical-and' [(b1 b2)
+	if [ if true false b2 ] false b1
+]
+
+def 'logical-or' [(b1 b2)
+	if true [ if true false b2 ] b1
+]
+
+def 'and' [(*and-conds)
+	fold [(and-x and-res)
+		fun? and-x . if [
+			; function
+			and-x . logical-and and-res
+		] [
+			; value
+			logical-and and-x and-res
+		]
+	] true and-conds
+]
+
+def 'or' [(*or-conds)
+	fold [(or-x or-res)
+		fun? or-x . if [
+			; function
+			or-x . logical-or or-res
+		] [
+			; value
+			logical-or or-x or-res
+		]
+	] false or-conds
+]

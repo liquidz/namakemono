@@ -1,0 +1,13 @@
+def 'do' [(do-fn)
+	fun? do-fn . when do-fn
+]
+
+def 'recv' [(*recv-args)
+	let1 'recv-ls' [rev recv-args . cadr . do] [
+		len recv-ls .1. for 0 ++ [(n)
+			ref n recv-args . def '_key'
+			ref n recv-ls . ldef _key
+		]
+		last recv-args . do
+	]
+]

@@ -1,0 +1,17 @@
+def 'let1' [(let1-key let1-value let1-fun)
+	fun? let1-value . if [let1-value] let1-value . def let1-key
+	let1-fun
+]
+
+def 'let' [(*let-args)
+	len let-args .0. - 1 .1. for 0 ++ [(n)
+		% n 2 . = 0 . if [
+			; key
+			ref n let-args . ldef '_tmp_let_key' 
+		] [
+			;value
+			ref n let-args . ldef _tmp_let_key
+		]
+	]
+	last let-args . do
+]

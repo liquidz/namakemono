@@ -1,0 +1,3 @@
+arr . def 'emp'
+
+def 'nl' [ pr '' ]

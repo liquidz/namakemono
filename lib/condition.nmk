@@ -1,0 +1,11 @@
+def 'when' [(when-func when-cond)
+	if when-func emp when-cond
+]
+
+def 'unless' [(unless-func unless-cond)
+	! unless-cond . when unless-func
+]
+
+def '!=' [(_x_ _y_)
+	= _x_ _y_ . !
+]

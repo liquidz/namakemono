@@ -1,0 +1,6 @@
+def 'for' [(initial-val last-val change-fun for-fun)
+	= initial-val last-val . unless [
+		for-fun initial-val
+                change-fun initial-val .0. for last-val change-fun for-fun
+	]
+]

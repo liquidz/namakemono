@@ -1,0 +1,14 @@
+def 'str-ref' [(sref-str sref-n)
+	string->list sref-str . ref sref-n
+]
+
+def 'list->string' [(l-s-ls)
+	fold [(x res)
+		+ res x
+	] "" l-s-ls
+]
+
+def 'substr' [(str s e)
+	- e s . + 1 . def '_tmp'
+	string->list str . drop s . take _tmp . list->string
+]

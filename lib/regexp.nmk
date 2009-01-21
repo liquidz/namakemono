@@ -1,0 +1,3 @@
+def 'match' [(match-base match-reg-str)
+	string->regexp match-reg-str . this match-base
+]

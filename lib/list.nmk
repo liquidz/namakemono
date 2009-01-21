@@ -1,0 +1,70 @@
+def '!' [(boolean)
+	if false true boolean
+]
+
+def 'cadr' [(cadr-ls)
+	cdr cadr-ls .car
+]
+
+def 'caddr' [(cadr-ls)
+	cdr cadr-ls .cdr .car
+]
+
+def 'last' [(last-ls)
+	rev last-ls . car
+]
+
+def 'each' [(each-fun each-ls)
+	null? each-ls . unless [
+		car each-ls . each-fun
+		cdr each-ls . each each-fun
+	]
+]
+
+def 'each-line' [(each-line-fun each-line-str)
+	/ each-line-str "\n" . each each-line-fun
+]
+
+def 'fold' [(fold-fun fold-initial fold-ls)
+	null? fold-ls . if fold-initial [
+		let1 '_fold-res' [car fold-ls .0. fold-fun fold-initial] [
+			cdr fold-ls . fold fold-fun _fold-res
+		]
+	]
+]
+
+def 'map' [(map-fun map-ls)
+	fold [(x res)
+		map-fun x .0. cons res
+	] emp map-ls . rev
+]
+
+def 'rev' [(rev-ls)
+	fold [(x res) cons x res] emp rev-ls
+]
+
+def 'len' [(len-ls)
+	fold [(x res)
+		++ res
+	] 0 len-ls
+]
+
+def 'ref' [(ref-num ref-ls)
+	= ref-num 0 . if [car ref-ls] [
+		- ref-num 1 . def '_tmp'
+		cdr ref-ls . ref _tmp
+	]
+]
+
+def 'take' [(t-n t-ls)
+	len t-ls .0. - t-n . = 0 . if t-ls [
+		rev t-ls . cdr .rev . take t-n
+	]
+]
+
+def 'drop' [(d-n d-ls)
+	= d-n 0 . if d-ls [
+		-- d-n . def '_tmp'
+		cdr d-ls . drop _tmp
+	]
+]
