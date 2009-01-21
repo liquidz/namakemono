@@ -9,12 +9,6 @@
 (require "./src/scanner")
 (require "./src/parser")
 
-;(define *debug* #t)
-(define *debug* 0)
-(define (debug level . str)
-  (when (<= level *debug*) (apply print str))
-  )
-
 ; =init
 ; -----------------------
 (define (namakemono-initialize)
@@ -174,10 +168,10 @@
        (print "bye")
        ]
       [(! string=? input "")
-       (let1 res (guard (e (else "error"))
+       (let1 res (guard (e (else e))
                    (run-source input)
                    )
-         (print res)
+         (print (if (eq? (class-of res) <error>) (slot-ref res 'message) res))
          (loop (get-user-input))
          )
        ]
@@ -208,24 +202,35 @@
 
     (set! *debug* debug)
 
-    (case (length rest-args)
-      ; command line mode
-      [(0)
-       (when version
-         (version-print)
-         (exit)
-         )
-       (command-line-environment)
-       ]
+    (let1 stdin (standard-input-port)
+      (cond
+        [(char-ready? stdin)
+         ; 標準入力でソースが読まれた場合
+         (run-source (port->string stdin))
+         ]
+        [else
+          ; ファイルの実行など
+          (case (length rest-args)
+            ; command line mode
+            [(0)
+             (when version
+               (version-print)
+               (exit)
+               )
+             (command-line-environment)
+             ]
 
-      ; file execute mode
-      [(1)
-       ; load and run source
-       (load-source (car rest-args))
-       ]
-      [else
-        (error "execute parameter")
-        ]
+            ; file execute mode
+            [(1)
+             ; load and run source
+             (load-source (car rest-args))
+             ]
+            [else
+              (error "too many parameter error: " rest-args)
+              ]
+            )
+          ]
+        )
       )
     )
   )

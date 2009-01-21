@@ -81,9 +81,9 @@ pr "* pipe position test"
 
 ; ===================================
 
-pr "* simple lambda test"
-= 1 1 . if ,pr 'passed',,pr 'ng',
-nl
+;pr "* simple lambda test"
+;= 1 1 . if ,pr 'passed',,pr 'ng',
+;nl
 
 ; ===================================
 
@@ -108,3 +108,11 @@ call/cc  [(cc)
 		+ x res
 	] 0
 ] . = 6 . if "passed" "ng" . pr . nl
+
+; ===================================
+
+pr "* rescue test"
+rescue [(e) -1] [
+	[(x y) + x y] 1 2 3
+] . = -1 . if "passed" "ng" . pr . nl
+

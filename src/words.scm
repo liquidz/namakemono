@@ -53,6 +53,11 @@
                                             )))))
     (list :jump (nmk-lambda (name . res) (when (*call/cc* '() 'exists? (make-keyword name))
                                            (apply (*call/cc* (make-keyword name)) res))))
+    (list :rescue (nmk-lambda (rescue-fn do-fn)
+                              (guard (e (else (rescue-fn (slot-ref e 'message))))
+                                (do-fn '())
+                                )
+                              ))
     (list :sym (nmk-lambda (str) (string->symbol str)))
     (list :http-get (nmk-lambda (url) (http-get url)))
     (list :if (nmk-lambda (ok ng pred)
@@ -91,3 +96,4 @@
                             ))
     )
   )
+

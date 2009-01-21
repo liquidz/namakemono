@@ -1,6 +1,51 @@
 (define *cr* #/\\r/)
 (define *lf* #/\\n/)
 
+; =my-string-drop
+; ほんのちょっとだけstring-dropより速い
+; ---------------------------------
+(define (my-string-drop str n)
+  (substring str n (string-length str))
+  )
+
+; =string-partial-delete
+; -----------------------------
+(define (string-partial-delete str start end)
+  (string-append (string-take str start) (my-string-drop str (+ end 1)))
+  )
+
+; =delete-comments
+; -------------------------
+(define (delete-comments str)
+  (cond
+    [(string-scan str #\;)
+     => (lambda (start)
+          (let* ((len (string-length str))
+                 (end (string-scan (my-string-drop str (+ start 1)) #\newline))
+                 )
+            (if end
+              (delete-comments (string-partial-delete str start (+ start end 1)))
+              (delete-comments (string-take str start))
+              )
+            )
+          )
+     ]
+    [(string-scan str "#|")
+     => (lambda (start)
+          (let* ((len (string-length str))
+                 (end (string-scan (my-string-drop str (+ start 1)) "|#"))
+                 )
+            (if end
+              (delete-comments (string-partial-delete str start (+ start end 2)))
+              (error "comment is not closed near:" str)
+              )
+            )
+          )
+     ]
+    [else str ]
+    )
+  )
+
 ; =mymin
 ;  数字以外があっても最小値を算出
 ; ---------------------------
@@ -54,9 +99,9 @@
     )
   )
 
-; =del-head-words
+; =delete-head-words
 ; ------------------------
-(define (del-head-words target-str . chars)
+(define (delete-head-words target-str . chars)
   (define (del-words-body str)
     (cond
       [(string=? str "") str]
@@ -67,7 +112,7 @@
                          (if (char=? fc c) (_break #t) #f)
                          ) #f chars)
                  )
-            (del-words-body (string-drop str 1))
+            (del-words-body (my-string-drop str 1))
             str
             )
           )
@@ -78,18 +123,18 @@
   (del-words-body target-str)
   )
 
-; =del-head-space
+; =delete-head-space
 ; ----------------------
-(define (del-head-space target-str)
-  (del-head-words target-str #\space #\tab)
+(define (delete-head-space target-str)
+  (delete-head-words target-str #\space #\tab)
   )
-; =del-head-crlf
+; =delete-head-crlf
 ; ----------------------
-(define (del-head-crlf target-str)
-  (del-head-words target-str #\return #\newline)
+(define (delete-head-crlf target-str)
+  (delete-head-words target-str #\return #\newline)
   )
-(define (del-head-space-crlf target-str)
-  (del-head-words target-str #\space #\tab #\return #\newline)
+(define (delete-head-space-crlf target-str)
+  (delete-head-words target-str #\space #\tab #\return #\newline)
   )
 ; =pickup
 ; --------------
@@ -121,7 +166,7 @@
                        )
                      0
                      )
-      (values (string-drop base (+ res del-len))
+      (values (my-string-drop base (+ res del-len))
               (string-take base res)
               )
       )
@@ -199,7 +244,10 @@
              )
            ]
           [else
-            (error "cannot find correct end" "original-code = " original-code)
+            ;(let1 tmp-code (regexp-replace-all* original-code #/[\r\n]/ "")
+            (let1 len (string-length original-code)
+              (error "lambda scanning error near: " (substring original-code 0 (if (> len 20) 20 len)))
+              )
             ]
           )
 
@@ -208,6 +256,8 @@
     )
   )
 
+; =count-make-lambda-params
+; -------------------------
 (define (count-make-lambda-params param)
   (if (char=? #\* (string-ref (keyword->string (value (last param))) 0))
     -1
@@ -246,28 +296,29 @@
                       ; register temporary variable
                       (block
                         _break
-                        (for-each
-                          (lambda (n)
-                            (let* ((var-name (value (list-ref param n)))
-                                   (s-var-name (keyword->string var-name))
-                                   )
-                              (cond
-                                [(char=? (string-ref s-var-name 0) #\*)
-                                 (set-variable (make-keyword (substring s-var-name 1 (string-length s-var-name)))
-                                               (drop p n))
-                                 ; 残りのパラメータは全て１つの引数に登録されたので
-                                 ;  for-each を抜ける
-                                 (_break)
-                                 ]
-                                [else
-                                  (set-variable var-name (list-ref p n))
-                                  ]
-                                )
+                        (dotimes (n (length p))
+                          (let* ((var-name (value (list-ref param n)))
+                                 (s-var-name (keyword->string var-name)))
+                            (cond
+                              [(char=? (string-ref s-var-name 0) #\*)
+                               (set-variable
+                                 (make-keyword
+                                   ; 先頭の*は抜かす
+                                   (my-string-drop s-var-name 1))
+                                 (drop p n))
+                               ; 残りのパラメータは全て１つの引数に登録されたので
+                               ;  for-each を抜ける
+                               (_break)
+                               ]
+                              [else
+                                (set-variable var-name (list-ref p n))
+                                ]
                               )
                             )
-                          (iota (length p) 0))
+                          )
                         )
 
+                      ; execute
                       (let1 result (run-tokens body)
                         ; delete temporary variables
                         (delete-local-namespace uid)
@@ -297,7 +348,7 @@
                          ]
                         [else
                           (change-current-uid last-uid)
-                          (error "lambda parameter" "correct = " param ", get = " p)
+                          (error "lambda parameter error:"  'required (length p)  'got (length param))
                           ]
                         )
                       ]
@@ -313,56 +364,39 @@
 ; =scanner
 ; -------------------
 (define (scanner original-code)
-  (let loop((code original-code) (res '()))
+  ;(let loop((code original-code) (res '()))
+  (let loop((code (delete-comments original-code)) (res '()))
+    ;(print "\n******************\n" code)
     (if (string=? code "") (r res)
       (let1 first-char (string-ref code 0)
         (cond
-          [(char=? first-char #\#)
-           (let1 second-char (string-ref code 1)
-             (cond
-               ; multiple lines comment
-               [(char=? second-char #\|)
-                (loop (del-head-space (kiritori code "|#")) res)
-                ]
-               ; regexp
-               [(char=? second-char #\/)
-                (receive (after before) (kiritori (string-drop code 2) "/")
-                  (loop (del-head-space after)
-                        (cons (list :regexp (string->regexp before)) res))
-                  )
-                ]
-               )
+          ; regexp
+          [(and (char=? first-char #\#) (char=? (string-ref code 1) #\/))
+           (receive (after before) (kiritori (my-string-drop code 2) "/")
+             (loop (delete-head-space after)
+                   (cons (list :regexp (string->regexp before)) res))
              )
            ]
           ; end
           [(or (char=? first-char #\newline) (char=? first-char #\return))
-           (loop (del-head-space (del-head-crlf code)) (cons (list :end '()) res))
-           ]
-          ; one line comment
-          [(char=? first-char #\;)
-           (let1 next-newline (string-scan code #\newline)
-             (if next-newline
-               (loop (del-head-space (string-drop code (++ next-newline))) res)
-               (loop "" res) ; 末尾の場合
-               )
-             )
+           (loop (delete-head-space (delete-head-crlf code)) (cons (list :end '()) res))
            ]
           ; string
           [(char=? first-char #\")
-           (receive (after before) (kiritori (string-drop code 1) "\"")
-             (loop (del-head-space after) (cons (list :string (correct-escape-sequence before)) res))
+           (receive (after before) (kiritori (my-string-drop code 1) "\"")
+             (loop (delete-head-space after) (cons (list :string (correct-escape-sequence before)) res))
              )
            ]
           ; string
           [(char=? first-char #\')
-           (receive (after before) (kiritori (string-drop code 1) "\'")
-             (loop (del-head-space after) (cons (list :string (correct-escape-sequence before)) res))
+           (receive (after before) (kiritori (my-string-drop code 1) "\'")
+             (loop (delete-head-space after) (cons (list :string (correct-escape-sequence before)) res))
              )
            ]
           ; keyword
           [(char=? first-char #\:)
            (let1 m (#/\:([A-Za-z_\+\-\*\/\%\=\<\>\!\?][A-Za-z0-9_\+\-\*\/\%\=\<\>\!\?]*)/ code)
-             (loop (del-head-space (m 'after)) (cons (list :keyword (make-keyword (m 1))) res))
+             (loop (delete-head-space (m 'after)) (cons (list :keyword (make-keyword (m 1))) res))
              )
            ]
           ; lambda
@@ -372,13 +406,13 @@
                   (body (get-correct-end (m 'after) "\\[" "\\]"))
                   )
              ; "+ 1" is length for "]"
-             (loop (del-head-space (string-drop (m 'after) (+ (string-length body) 1)))
+             (loop (delete-head-space (my-string-drop (m 'after) (++ (string-length body))))
                    (cons (make-lambda param body) res))
              )
            ]
           ; simple lambda
           [(char=? first-char #\,)
-           (let* ((code2 (string-drop code 1))
+           (let* ((code2 (my-string-drop code 1))
                   (next-comma (string-scan code2 #\,))
                   (next-period (string-scan code2 #\.))
                   (next-newline (string-scan code2 #\newline))
@@ -386,15 +420,17 @@
              (receive (n clc?) (let1 t (mymin next-comma next-period next-newline)
                                  (cond
                                    [t (values t (if (and (number? next-comma) (= t next-comma)) #t #f))]
-                                   [else (error "simple lambda")]
+                                   [else
+                                     (error "not found simple lambda end: near" code)
+                                     ]
                                    )
                                  )
                (let* ((before (string-take code2 n))
                       ; "+ 1" is length for ","
-                      (after (string-drop code2 (if clc? (+ n 1) n)))
+                      (after (my-string-drop code2 (if clc? (+ n 1) n)))
                       (m (#/^[\ \t]*(\((.+?)\))?/ before))
                       )
-                 (loop (del-head-space after) (cons (make-lambda (m 2) (m 'after)) res))
+                 (loop (delete-head-space after) (cons (make-lambda (m 2) (m 'after)) res))
                  )
                )
              )
@@ -412,7 +448,7 @@
           ; this syntax
           [(this? code)
            ; 4 is length of 'this'
-           (loop (del-head-space (string-drop code 4)) (cons (list :this '()) res))
+           (loop (delete-head-space (my-string-drop code 4)) (cons (list :this '()) res))
            ]
           ; def-mac syntax
           #|
@@ -421,7 +457,7 @@
                   (title (m 1))
                   (original-body (get-correct-end (m 'after) "\\[" "\\]"))
                   )
-             (let dm-loop((tmp (del-head-crlf original-body)) (dm-res '()))
+             (let dm-loop((tmp (delete-head-crlf original-body)) (dm-res '()))
                (cond
                  [(string=? tmp "")
                   ; macroに登録
@@ -435,17 +471,17 @@
                           )
                         dm-res)
                       )
-                    (loop (del-head-space (string-drop (m 'after) (+ (string-length original-body) 1))) res)
+                    (loop (delete-head-space (my-string-drop (m 'after) (+ (string-length original-body) 1))) res)
                     )
                   ]
                  [else
-                   (let* ((macro-body (get-correct-end (string-drop tmp 1) "\\[" "\\]"))
+                   (let* ((macro-body (get-correct-end (my-string-drop tmp 1) "\\[" "\\]"))
                           (m (#/[\ \t]*\((.+?)\)/ macro-body))
                           (param (m 1))
-                          (body (trim (m 'after)));(del-head-space-crlf (m 'after)))
+                          (body (trim (m 'after)));(delete-head-space-crlf (m 'after)))
                           )
                      ; "+ 2" は先頭の"["と末尾の"]"の分
-                     (dm-loop (del-head-space-crlf (string-drop tmp (+ (string-length macro-body) 2)))
+                     (dm-loop (delete-head-space-crlf (my-string-drop tmp (+ (string-length macro-body) 2)))
                               (cons (list (scanner param) (scanner body)) dm-res)
                               )
                      )
@@ -468,7 +504,8 @@
                 )
            ]
           [else
-            (error "scanning" "code = " code)
+            (error "scanning error: " code)
+            ;(error "scanning" "code = " code)
             ]
           )
         )

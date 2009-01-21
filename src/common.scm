@@ -1,5 +1,7 @@
 (define *nmk-version* "0.12")
 
+(define *debug* 0)
+
 (define *global-namespace* (make-hash-table-wrap))
 (define *local-namespace* (make-hash-table-wrap))
 ;(define *macro-namespace* (make-hash-table-wrap))
@@ -20,6 +22,11 @@
 (define-method initialize ((self <overloaded-function>) init-args)
   (next-method)
   (set! (slot-ref self 'table) (make-hash-table-wrap))
+  )
+
+(define (debug level . str)
+  (when (<= level *debug*) (apply print str))
+  ;(apply print str)
   )
 
 ; =overloaded-function?
@@ -133,7 +140,7 @@
              ; 可変長のパラメータを持つ関数がないか確認
              (if ((slot-ref tmp 'table) '() 'exists? -1)
                ((slot-ref tmp 'table) -1)
-               (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
+               (error "unknown local overloaded function: " key *current-uid*)
                )
              )
            tmp
@@ -161,7 +168,7 @@
             ; 可変長のパラメータを持つ関数がないか確認
             (if ((slot-ref tmp 'table) '() 'exists? -1)
               ((slot-ref tmp 'table) -1)
-              (error "do not found variable in overloaded function" "key = " key " / uid = " *current-uid*)
+              (error "unknown global overloaded function: " key *current-uid*)
               )
             )
           ]
@@ -172,7 +179,7 @@
        )
      ]
     [else
-      (error "do not found variable" "key = " key " / uid = " *current-uid*)
+      (error "unknown variable: " key *current-uid*)
       ]
     )
   )

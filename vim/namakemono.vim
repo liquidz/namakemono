@@ -4,18 +4,17 @@ elseif exists("b:current_syntax")
   finish
 endif
 
-syn keyword nmkDefine def let1
+syn keyword nmkDefine def let1 ref
 syn match nmkDefine "_"
-"syn match nmkType ","
-syn keyword nmkFunction arr each pr di cons car cdr reverse load ! null? fun?
+syn keyword nmkFunction arr each pr di cons car cdr reverse load ! null? fun? fold and recv str-ref list->string substr or match for let map apply
 syn keyword nmkTodo   contained TODO FIXME XXX
 syn match nmkComment ";.*$" contains=nmkTodo
-syn region nmkComment  start="#|" end="|#"
-syn keyword nmkStatement if fn end
-syn keyword nmkType this nl
+syn keyword nmkStatement if
+syn keyword nmkType this nl rescue when
 syn match nmkStatement "\."
+syn match nmkFunction "call\/cc"
 syn match nmkStatement "\.\<[0-9]\+\>\."
-syn match nmkNumber "\<[0-9]\+\>"
+syn match nmkNumber oneline "[-#+0-9][-#+/0-9.]*"
 syn region nmkString  start=+'+ end=+'+ skip=+\\\\\|\\'+
 syn region nmkString  start=+"+ end=+"+ skip=+\\\\\|\\"+
 syn region nmkString start=+\%(\\\)\@<!#/+ skip=+\\[\\/]+ end=+/+
@@ -23,6 +22,7 @@ syn region nmkLambda matchgroup=Delimiter start="(" matchgroup=Delimiter end=")"
 "syn region nmkLambda matchgroup=Delimiter start="\[" matchgroup=Delimiter end="\]" contains=ALL
 syn region nmkLambda matchgroup=Statement start="\[" matchgroup=Statement end="\]" contains=ALL
 syn keyword nmkBoolean true false
+syn region nmkComment  start="#|" end="|#"
 
 if version >= 508 || !exists("did_namakemono_syntax_inits")
   if version < 508
