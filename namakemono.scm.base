@@ -4,12 +4,12 @@
 (use gauche.parseopt)
 (use simply)
 
-(require "./src/common")
-(require "./src/words")
-(require "./src/scanner")
-(require "./src/parser")
+(require "@NMK_PATH@/src/common")
+(require "@NMK_PATH@/src/words")
+(require "@NMK_PATH@/src/scanner")
+(require "@NMK_PATH@/src/parser")
 
-(define *library-path* "./lib")
+(define *library-path* "@NMK_PATH@/lib")
 
 ; =init
 ; -----------------------
