@@ -94,7 +94,7 @@
 ; --------------------
 (define (run-source source-code)
   (let1 all-tokens (scanner source-code)
-    (run-token (collect-lambda all-tokens))
+    (run-tokens (collect-lambda all-tokens))
     )
   )
 
