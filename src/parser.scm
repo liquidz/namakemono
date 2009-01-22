@@ -1,5 +1,12 @@
 (define *nil-returned-value* 'nothing)
 
+; =my-string-drop
+; ほんのちょっとだけstring-dropより速い
+; ---------------------------------
+(define (my-string-drop str n)
+  (substring str n (string-length str))
+  )
+
 ; =pickup
 ; ----------------------
 (define (pickup ls start end)
