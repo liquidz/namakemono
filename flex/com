@@ -1,0 +1,5 @@
+#!/bin/sh
+
+flex namakemono.lex
+gcc lex.yy.c -o nmk-scan -lfl
+mv nmk-scan ..

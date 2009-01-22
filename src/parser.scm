@@ -1,5 +1,11 @@
 (define *nil-returned-value* 'nothing)
 
+; =pickup
+; ----------------------
+(define (pickup ls start end)
+  (drop (take ls (++ end)) start)
+  )
+
 ; =append-with-null
 ; ----------------------------
 (define (append-with-null ls1 ls2)

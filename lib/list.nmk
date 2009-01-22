@@ -10,6 +10,10 @@ def 'caddr' [(cadr-ls)
 	cdr cadr-ls .cdr .car
 ]
 
+def 'cddr' [(cddr-ls)
+	cdr cddr-ls . cdr
+]
+
 def 'first' car
 def 'second' cadr
 def 'third' caddr
@@ -78,4 +82,32 @@ def 'drop' [(d-n d-ls)
 		-- d-n . def '_tmp'
 		cdr d-ls . drop _tmp
 	]
+]
+
+def 'make-arr' [(make-arr-seed make-arr-length)
+	= make-arr-length 0 . if make-arr-seed [
+		arr? make-arr-seed . if [
+			ref 0 make-arr-seed .0. cons make-arr-seed
+		] [
+			cons make-arr-seed emp
+		] . [(_tmp)
+			-- make-arr-length . make-arr _tmp
+		]
+	]
+]
+
+def 'arr-set' [(arr-set-ls arr-set-pos arr-set-to)
+	def 'arr-set-body' [(body-index body-limit body-res)
+		< body-index body-limit . if [
+			= body-index arr-set-pos . if [
+				cons arr-set-to body-res
+			] [
+				ref body-index arr-set-ls .0. cons body-res
+			] . [(_tmp)
+				++ body-index .0. arr-set-body body-limit _tmp
+			]
+		] body-res
+	]
+
+	len arr-set-ls .1. arr-set-body 0 emp . rev
 ]

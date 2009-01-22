@@ -13,3 +13,20 @@ def 'unless' [(unless-func unless-cond)
 def '!=' [(_x_ _y_)
 	= _x_ _y_ . !
 ]
+
+def 'cond' [(*cond-args)
+	len cond-args . [(cond-args-len)
+		> cond-args-len 1 . if [
+			first cond-args . do . if [
+				second cond-args . do
+			] [
+				cddr cond-args . apply cond
+			]
+		] [
+			= cond-args-len 1 . when [
+				; else part
+				car cond-args . do
+			]
+		]
+	]
+]

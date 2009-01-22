@@ -1,0 +1,94 @@
+read-line 'src> ' . string->list . def 'src'
+len src . def 'src-len'
+
+def 'mem-max' 100
+def 'mem-min' 0
+
+def 'get-correct-end' [(ls start-pos start-char end-char move-fun)
+	def 'get-correct-end-body' [(level index)
+		ref index ls . [(c)
+			cond [= c start-char] [
+				;start
+				++ level .[(next-level)
+					move-fun index . get-correct-end-body next-level
+				]
+			] [= c end-char] [
+				;end
+				-- level . [(next-level)
+					= next-level 0 . if [
+						index
+					] [
+						move-fun index . get-correct-end-body next-level
+					]
+				]
+			] [
+				;else
+				move-fun index . get-correct-end-body level
+			]
+		]
+	]
+
+	get-correct-end-body 0 start-pos
+]
+
+def 'scan' [(src-index mem-index mem)
+	;pr "si = " src-index ", mi = " mem-index ", m = " mem
+	< src-index src-len . when [
+		ref src-index src . [(c)
+			cond [= c "+"] [
+				; +
+				ref mem-index mem . ++ . arr-set mem mem-index . [(_tmp)
+					++ src-index .0. scan mem-index _tmp
+				]
+			] [= c "-"] [
+				; -
+				ref mem-index mem . -- . arr-set mem mem-index . [(_tmp)
+					++ src-index .0. scan mem-index _tmp
+				]
+			] [= c ">"] [
+				; >
+				-- mem-max . < mem-index . if [ ++ mem-index ] mem-index . [(next-mem-index)
+					++ src-index .0. scan next-mem-index mem
+				]
+			] [= c "<"] [
+				; <
+				> mem-index mem-min . if [ -- mem-index ] mem-index . [(prev-mem-index)
+					++ src-index .0. scan prev-mem-index mem
+				]
+			] [= c "["] [
+				; [
+				ref mem-index mem . = 0 . if [
+					; jump
+					get-correct-end src src-index '[' ']' ++ .0. scan mem-index mem
+				] [
+					++ src-index .0. scan mem-index mem
+				]
+			] [= c "]"] [
+				; ]
+				ref mem-index mem . != 0 . if [
+					; jump
+					get-correct-end src src-index ']' '[' -- .0. scan mem-index mem
+				] [
+					++ src-index .0. scan mem-index mem
+				]
+			] [= c "."] [
+				; .
+				ref mem-index mem . int->str . pr
+				;ref mem-index mem . di
+				++ src-index .0. scan mem-index mem
+			] [= c ","] [
+				read-line ">" . str->int . arr-set mem mem-index . [(_tmp)
+					++ src-index .0. scan mem-index _tmp
+				]
+			]
+		]
+	]
+]
+make-arr mem-min mem-max . scan 0 0 . nl
+
+#|
+arr '[' 'a' 'b' '[' 'c' ']' 'd' ']' 'e' ']' . def 'ls'
+pr ls
+get-correct-end ls 0 '[' ']' ++ . pr
+get-correct-end ls 5 ']' '[' -- . pr
+|#

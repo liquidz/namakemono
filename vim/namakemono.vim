@@ -6,11 +6,11 @@ endif
 
 syn keyword nmkDefine def let1 ref
 syn match nmkDefine "_"
-syn keyword nmkFunction arr each pr di cons car cdr reverse load ! null? fun? fold and recv str-ref list->string substr or match for let map apply
+syn keyword nmkFunction arr each pr di cons car cdr reverse load ! null? fun? fold and recv str-ref list->string substr or match for let map apply strlen makestr break next first second third has-args?
 syn keyword nmkTodo   contained TODO FIXME XXX
 syn match nmkComment ";.*$" contains=nmkTodo
 syn keyword nmkStatement if
-syn keyword nmkType this nl rescue when
+syn keyword nmkType this nl rescue when unless
 syn match nmkStatement "\."
 syn match nmkFunction "call\/cc"
 syn match nmkStatement "\.\<[0-9]\+\>\."
