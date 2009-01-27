@@ -230,18 +230,16 @@
 ;     else => 他パラーメータの指定された箇所にreturned-valueを挿入
 ; ---------------------
 (define (make-params expr returned-value position)
+  ; 引数の有無を明確にするため予めexprの長さを調べる
+  ; ex) command emp
+  ;     command
+  ;     の違いを明確に分けるため
   (let1 tmp-param (if (= 1 (length expr))
                     'no-param
                     (r fold
                        (lambda (x res)
-                         (cond
-                           [(_word? x)
-                            (cons (get-variable (value x)) res)
-                            ]
-                           [else
-                             (cons (value x) res)
-                             ]
-                           )
+                         (cons (if (_word? x) (get-variable (value x))
+                                 (value x)) res)
                          )
                        '() (cdr expr))
                     )
@@ -266,18 +264,21 @@
 ; =execute
 ; ---------------------------
 (define (execute expr returned-value pos)
-  (let1 first-token (car expr)
+  (let ((first-token (car expr))
+        (expr-len (length expr))
+        (cdr-expr-len (length (cdr expr)))
+        )
     (cond
       ; トークン列の最初が関数や変数の場合
       [(_word? first-token)
        (let1 first-val (get-variable (value first-token) (if (eq? returned-value *nil-returned-value*)
-                                                           (cdr expr)
-                                                           (cons returned-value (cdr expr))))
+                                                           cdr-expr-len
+                                                           (++ cdr-expr-len))) ; return-valueの分を増やす
          (cond
            ; 関数の場合は無条件で実行
            ; 正規表現の結果セットの場合は引数(または前の関数の戻り値)があれば実行
            [(or (procedure? first-val)
-              (and (regmatch? first-val) (or (> (length expr) 1)
+              (and (regmatch? first-val) (or (> expr-len 1)
                                            (! eq? returned-value *nil-returned-value*)
                                            ))
               )
@@ -289,8 +290,8 @@
        ]
       ; トークン列の最初が無名関数、または正規表現オブジェクトの場合
       ;   引数があれば実行。引数がなければ else パートに飛びオブジェクトと見なす
-      [(or (and (_lambda? first-token) (or (> (length expr) 1) (! eq? returned-value *nil-returned-value*)))
-         (and (_regexp? first-token) (or (> (length expr) 1) (! eq? returned-value *nil-returned-value*))))
+      [(or (and (_lambda? first-token) (or (> expr-len 1) (! eq? returned-value *nil-returned-value*)))
+         (and (_regexp? first-token) (or (> expr-len 1) (! eq? returned-value *nil-returned-value*))))
        (let1 first-val (value first-token)
          (apply first-val (make-params expr returned-value pos))
          )

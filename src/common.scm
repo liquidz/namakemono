@@ -127,15 +127,15 @@
 
 ; =_get-local-variable
 ; --------------------
-(define (_get-local-variable key params)
+(define (_get-local-variable key param-len)
   (let1 ns (*local-namespace* *current-uid*)
     (cond
       [(ns '() 'exists? key)
        (let1 tmp (ns key)
          (if (overloaded-function? tmp)
            ; オーバーロードされてる場合は引数の数から関数を探す
-           (if ((slot-ref tmp 'table) '() 'exists? (length params))
-             ((slot-ref tmp 'table) (length params))
+           (if ((slot-ref tmp 'table) '() 'exists? param-len)
+             ((slot-ref tmp 'table) param-len)
              ; 可変長のパラメータを持つ関数がないか確認
              (if ((slot-ref tmp 'table) '() 'exists? -1)
                ((slot-ref tmp 'table) -1)
@@ -147,7 +147,7 @@
          )
        ]
       [else
-        (_get-global-variable key params)
+        (_get-global-variable key param-len)
         ]
       )
     )
@@ -155,15 +155,15 @@
 
 ; =_get-global-variable
 ; ------------------------
-(define (_get-global-variable key params)
+(define (_get-global-variable key param-len)
   (cond
     [(*global-namespace* '() 'exists? key)
      (let1 tmp (*global-namespace* key)
        (cond
          [(overloaded-function? tmp)
           ; オーバーロードされてる場合は引数の数から関数を探す
-          (if ((slot-ref tmp 'table) '() 'exists? (length params))
-            ((slot-ref tmp 'table) (length params))
+          (if ((slot-ref tmp 'table) '() 'exists? param-len)
+            ((slot-ref tmp 'table) param-len)
             ; 可変長のパラメータを持つ関数がないか確認
             (if ((slot-ref tmp 'table) '() 'exists? -1)
               ((slot-ref tmp 'table) -1)
@@ -185,19 +185,13 @@
 
 ; =get-variable
 ; ----------------
-(define (get-variable key . params)
+(define (get-variable key . param-len)
   (cond
     [(*local-namespace* '() 'exists? *current-uid*)
-     (if (null? params)
-       (_get-local-variable key '())
-       (_get-local-variable key (car params))
-       )
+     (_get-local-variable key (if (null? param-len) -1 (car param-len)))
      ]
     [else
-      (if (null? params)
-        (_get-global-variable key '())
-        (_get-global-variable key (car params))
-        )
+      (_get-global-variable key (if (null? param-len) -1 (car param-len)))
       ]
     )
   )

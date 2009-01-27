@@ -22,26 +22,12 @@
 		char tmp[CHAR_MAX];
 
 		len = strlen(str);
-
 		for(i = 1, j = 0; i < len; ++i, ++j){
 			tmp[j] = str[i];
 		}
 		tmp[j] = '\0';
 		return atoi(tmp);
 	}
-
-/*
-	char* single_quote_to_double_quote(char* str){
-		int len = 0, i = 0;
-		char tmp[CHAR_MAX];
-		strcpy(tmp, str);
-		len = strlen(tmp);
-		for(i = 0; i < len; ++i){
-			if(tmp[i] == '\'') tmp[i] = '\"';
-		}
-		return &tmp;
-	}
-	*/
 %}
 
 DIGIT 	[0-9]
