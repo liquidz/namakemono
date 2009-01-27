@@ -16,19 +16,10 @@
 ; =append-with-null
 ; ----------------------------
 (define (append-with-null ls1 ls2)
-  (cond
-    [(and (null? ls1) (null? ls2))
-     (list '() '())
-     ]
-    [(and (null? ls1) (! null? ls2))
-     (cons '() ls2)
-     ]
-    [(and (! null? ls1) (null? ls2))
-     (reverse (cons '() (reverse ls1)))
-     ]
-    [else
-      (append ls1 ls2)
-      ]
+  (let ((ls1-2 (if (null? ls1) '(()) ls1))
+        (ls2-2 (if (null? ls2) '(()) ls2))
+        )
+    (append ls1-2 ls2-2)
     )
   )
 
