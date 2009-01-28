@@ -8,9 +8,13 @@ if [ -e "namakemono.scm" ]; then
 fi
 
 sed -e "s/@NMK_PATH@/$dir/g" namakemono.scm.base > namakemono.scm
-sed -e "s/@NMK_PATH@/$dir/g" nmk.base > nmk
+env gosh scm2exe.scm -o nmk namakemono.scm
+#sed -e "s/@NMK_PATH@/$dir/g" nmk.base > nmk
 
 chmod 444 namakemono.scm
-chmod 755 nmk
+#chmod 755 nmk
+
+here=`pwd`
+ln -s $here/nmk /usr/local/bin
 
 rm -f .nmk_setup_tmp

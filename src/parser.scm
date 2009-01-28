@@ -12,6 +12,14 @@
 (define (pickup ls start end)
   (drop (take ls (++ end)) start)
   )
+#|
+(define (pickup ls start end)
+  (define (pickup-body b-ls n)
+    (if (= n 0) b-ls (pickup-body (cdr b-ls) (-- n)))
+    )
+  (r pickup-body (r pickup-body ls start) (- end start))
+  )
+|#
 
 ; =append-with-null
 ; ----------------------------
