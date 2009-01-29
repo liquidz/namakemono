@@ -2,7 +2,6 @@
 
 CC = gcc
 LEX = flex
-objs = lex.yy.c nmk-scan
 
 all: lex.yy.c nmk-scan
 
@@ -13,4 +12,4 @@ lex.yy.c: namakemono.lex
 	$(LEX) $<
 
 clean:
-	rm -f $(objs)
+	rm -f nmk-scan
