@@ -1,0 +1,26 @@
+# Makefile
+
+objs = src/namakemono.scm nmk /usr/local/bin/nmk
+GOSH = gosh
+SCANNER_PATH = src/scanner
+
+.PHONY: all clean
+
+all: src/namakemono.scm nmk
+	cd $(SCANNER_PATH); $(MAKE) all
+
+nmk: src/namakemono.scm
+	$(GOSH) tool/scm2exe.scm -o $@ $<
+
+src/namakemono.scm: src/namakemono.scm.base
+	$(GOSH) setup.scm
+
+check:
+	$(GOSH) src/namakemono.scm test/syntax.nmk
+
+install:
+	ln -s @HERE@/nmk /usr/local/bin
+
+clean:
+	cd $(SCANNER_PATH); $(MAKE) clean
+	rm -f $(objs)
