@@ -1,6 +1,6 @@
 # Makefile
 
-objs = src/namakemono.scm nmk /usr/local/bin/nmk
+objs = src/namakemono.scm nmk
 GOSH = gosh
 SCANNER_PATH = src/scanner
 
@@ -20,6 +20,9 @@ check:
 
 install:
 	ln -s @HERE@/nmk /usr/local/bin
+
+uninstall:
+	rm -f /usr/local/bin/nmk
 
 clean:
 	cd $(SCANNER_PATH); $(MAKE) clean
