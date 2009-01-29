@@ -432,26 +432,12 @@ char *yytext;
 		char tmp[CHAR_MAX];
 
 		len = strlen(str);
-
 		for(i = 1, j = 0; i < len; ++i, ++j){
 			tmp[j] = str[i];
 		}
 		tmp[j] = '\0';
 		return atoi(tmp);
 	}
-
-/*
-	char* single_quote_to_double_quote(char* str){
-		int len = 0, i = 0;
-		char tmp[CHAR_MAX];
-		strcpy(tmp, str);
-		len = strlen(tmp);
-		for(i = 0; i < len; ++i){
-			if(tmp[i] == '\'') tmp[i] = '\"';
-		}
-		return &tmp;
-	}
-	*/
 #define S_STRING 1
 
 #define D_STRING 2
@@ -464,7 +450,7 @@ char *yytext;
 
 #define MULTI_LINE_COMMENT 6
 
-#line 468 "lex.yy.c"
+#line 454 "lex.yy.c"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -615,9 +601,9 @@ YY_DECL
 	register char *yy_cp = NULL, *yy_bp = NULL;
 	register int yy_act;
 
-#line 57 "namakemono.lex"
+#line 43 "namakemono.lex"
 
-#line 621 "lex.yy.c"
+#line 607 "lex.yy.c"
 
 	if ( yy_init )
 		{
@@ -702,45 +688,45 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 58 "namakemono.lex"
+#line 44 "namakemono.lex"
 {
 	BEGIN(MULTI_LINE_COMMENT);
 }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 61 "namakemono.lex"
+#line 47 "namakemono.lex"
 {}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 62 "namakemono.lex"
+#line 48 "namakemono.lex"
 {
 	BEGIN(INITIAL);
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 66 "namakemono.lex"
+#line 52 "namakemono.lex"
 {
 	BEGIN(ONE_LINE_COMMENT);
 }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 69 "namakemono.lex"
+#line 55 "namakemono.lex"
 {}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 70 "namakemono.lex"
+#line 56 "namakemono.lex"
 {
 	BEGIN(INITIAL);
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 74 "namakemono.lex"
+#line 60 "namakemono.lex"
 {
 	clear_buffer();
 	BEGIN(REGEXP);
@@ -748,14 +734,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 78 "namakemono.lex"
+#line 64 "namakemono.lex"
 {
 	add_to_buffer(yytext[0]);
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 81 "namakemono.lex"
+#line 67 "namakemono.lex"
 {
 	add_to_buffer(yytext[0]);
 	last_state = REGEXP;
@@ -764,7 +750,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 86 "namakemono.lex"
+#line 72 "namakemono.lex"
 {
 	add_to_buffer('\0');
 	BEGIN(INITIAL);
@@ -773,7 +759,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 92 "namakemono.lex"
+#line 78 "namakemono.lex"
 {
 	/* =end */
 	printf("(:end '()) ");
@@ -781,7 +767,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 97 "namakemono.lex"
+#line 83 "namakemono.lex"
 {
 	clear_buffer();
 	BEGIN(D_STRING);
@@ -789,14 +775,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 101 "namakemono.lex"
+#line 87 "namakemono.lex"
 {
 	add_to_buffer(yytext[0]);
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 104 "namakemono.lex"
+#line 90 "namakemono.lex"
 {
 	add_to_buffer(yytext[0]);
 	last_state = D_STRING;
@@ -805,7 +791,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 109 "namakemono.lex"
+#line 95 "namakemono.lex"
 {
 	add_to_buffer('\0');
 	BEGIN(INITIAL);
@@ -814,7 +800,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 115 "namakemono.lex"
+#line 101 "namakemono.lex"
 {
 	clear_buffer();
 	BEGIN(S_STRING);
@@ -822,14 +808,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 119 "namakemono.lex"
+#line 105 "namakemono.lex"
 {
 	add_to_buffer(yytext[0]);
 }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 122 "namakemono.lex"
+#line 108 "namakemono.lex"
 {
 	add_to_buffer(yytext[0]);
 	last_state = S_STRING;
@@ -838,7 +824,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 127 "namakemono.lex"
+#line 113 "namakemono.lex"
 {
 	add_to_buffer('\0');
 	BEGIN(INITIAL);
@@ -847,7 +833,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 133 "namakemono.lex"
+#line 119 "namakemono.lex"
 {
 	add_to_buffer(yytext[0]);
 	if(last_state != -1){
@@ -859,7 +845,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 142 "namakemono.lex"
+#line 128 "namakemono.lex"
 {
 	/* =keyword */
 	printf("(:keyword %s) ", yytext);
@@ -867,7 +853,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 147 "namakemono.lex"
+#line 133 "namakemono.lex"
 {
 	/* =lambda start */
 	printf("(:lambda-start '()) ");
@@ -875,7 +861,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 152 "namakemono.lex"
+#line 138 "namakemono.lex"
 {
 	/* =lambda end */
 	printf("(:lambda-end '()) ");
@@ -883,7 +869,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 157 "namakemono.lex"
+#line 143 "namakemono.lex"
 {
 	/* =parameter start */
 	printf("(:parameter-start '()) ");
@@ -891,7 +877,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 162 "namakemono.lex"
+#line 148 "namakemono.lex"
 {
 	/* =parameter end */
 	printf("(:parameter-end '()) ");
@@ -899,7 +885,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 167 "namakemono.lex"
+#line 153 "namakemono.lex"
 {
 	/* =pipe-pos */
 	printf("(:pipe '()) ");
@@ -908,7 +894,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 173 "namakemono.lex"
+#line 159 "namakemono.lex"
 {
 	/* =pipe */
 	printf("(:pipe '()) ");
@@ -916,7 +902,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 178 "namakemono.lex"
+#line 164 "namakemono.lex"
 {
 	/* =this */
 	printf("(:this '())");
@@ -924,7 +910,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 183 "namakemono.lex"
+#line 169 "namakemono.lex"
 {
 	/* =number */
 	printf("(:number %s) ", yytext);
@@ -932,7 +918,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 188 "namakemono.lex"
+#line 174 "namakemono.lex"
 {
 	/* =word */
 	printf("(:word :%s) ", yytext);
@@ -940,12 +926,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 193 "namakemono.lex"
+#line 179 "namakemono.lex"
 { /* space */ }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 195 "namakemono.lex"
+#line 181 "namakemono.lex"
 {
 	printf("scanning error: unknown token = '%s'\n", yytext);
 	exit(-1);
@@ -953,10 +939,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 201 "namakemono.lex"
+#line 187 "namakemono.lex"
 ECHO;
 	YY_BREAK
-#line 960 "lex.yy.c"
+#line 946 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(S_STRING):
 case YY_STATE_EOF(D_STRING):
@@ -1844,7 +1830,7 @@ int main()
 	return 0;
 	}
 #endif
-#line 201 "namakemono.lex"
+#line 187 "namakemono.lex"
 
 
 main(argc, argv)

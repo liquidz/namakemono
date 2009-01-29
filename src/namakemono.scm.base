@@ -11,7 +11,7 @@
 (require "@NMK_PATH@/src/parser")
 
 (define *library-path* "@NMK_PATH@/lib")
-(define *scanner-path* "@NMK_PATH@/nmk-scan")
+(define *scanner-path* "@NMK_PATH@/src/scanner/nmk-scan")
 
 ; =init
 ; -----------------------
@@ -184,5 +184,6 @@
         )
       )
     )
+  0
   )
 
