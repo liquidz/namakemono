@@ -7,7 +7,6 @@
 
 (require "@NMK_PATH@/src/common")
 (require "@NMK_PATH@/src/words")
-;(require "@NMK_PATH@/src/scanner")
 (require "@NMK_PATH@/src/parser")
 
 (define *library-path* "@NMK_PATH@/lib")
@@ -25,12 +24,6 @@
 
   ; library
   (for-each load-source (collect-library *library-path*))
-  )
-
-; =del-tab
-; --------------
-(define (del-tab str)
-  (regexp-replace-all* str #/[\t]/ "")
   )
 
 ; =run-tokens
@@ -134,55 +127,142 @@
     )
   )
 
+; =one-liner
+; ----------------------
+(define (one-liner options rest-args has-standard-input)
+  (let ((code (options 'e))
+        (each-line (options 'n))
+        (print-result (options 'p))
+        )
+    (let1 res (run-source (cond
+                            [each-line
+                              ; 行単位での処理の場合
+                              (if has-standard-input
+                                ; 標準入力があればそれを処理する
+                                #`"_ . each-line [ ,|code| ]"
+                                ; なければ残りの引数の先頭をファイル名と見なし処理する
+                                (let1 input-file (car rest-args)
+                                  #`"file->list ',|input-file|' . each [ ,|code| ]")
+                                )
+                              ]
+                            [else
+                              (when (and (! has-standard-input)
+                                      (> (length rest-args) 0))
+                                ; 標準入力がない場合は暗黙知に何も入っていないので
+                                ; 残りの引数の先頭をファイル名と見なし読み込んでおく
+                                (set-variable (make-keyword *implicit-variable*)
+                                              (file->string (car rest-args)))
+                                )
+                              code
+                              ]
+                            )
+                          )
+      (when print-result (print res))
+      )
+    )
+  (exit)
+  )
+
 ; =version-print
 ; -----------------
 (define (version-print)
   (print "namakemono " *nmk-version*)
+  (exit)
+  )
+
+; =usage
+; ------------------
+(define (usage)
+  (print "")
+  (print "Usage: nmk [switches] [programfile] [arguments]")
+  (print "  -d <debug lebel>  run program with this debug level")
+  (print "  -e <command>      one line program")
+  (print "  -n                assume '_ . each-line [ ... ]'")
+  (print "  -p                print final result")
+  (print "  -v                print version")
+  (print "")
+  (exit)
   )
 
 ; =main
 ; ---------------
 (define (main args)
-  (let-args (cdr args)
-    ((debug "d|debug=i" 0)
-     (version "v|version")
-     . rest-args
-     )
+  (receive (options rest-args) (args->hash (cdr args)
+                                           '((d 1 0)
+                                             (e 1 #f)
+                                             n p v h
+                                             ))
+    ; version print
+    (when (options 'v) (version-print))
+
+    ; usage print
+    (when (options 'h) (usage))
 
     ; initialize
     (namakemono-initialize)
 
-    (set! *debug* debug)
+    ; set debug
+    (set! *debug* (options 'd))
 
-    (let1 stdin (standard-input-port)
-      (cond
-        [(char-ready? stdin)
-         ; 標準入力でソースが読まれた場合
-         (run-source (port->string stdin))
+    ; else
+    (let ((has-standard-input (char-ready? (standard-input-port)))
+          (imp-var (make-keyword *implicit-variable*))
+          )
+      ; 標準入力があれば暗黙値として保存
+      (when has-standard-input (set-variable imp-var (port->string (standard-input-port))))
+      ; one-liner
+      (when (options 'e) (one-liner options rest-args has-standard-input))
+
+      ; else
+      (case (length rest-args)
+        [(0)
+         (if has-standard-input
+           ; 標準入力があればそれを実行
+           (run-source (get-variable imp-var))
+           ; なければコマンドライン環境
+           (command-line-environment)
+           )
          ]
         [else
-          ; ファイルの実行など
-          (case (length rest-args)
-            ; command line mode
-            [(0)
-             (when version
-               (version-print)
-               (exit)
-               )
-             (command-line-environment)
-             ]
-
-            ; file execute mode
-            [else
-              ; command-line parameter
-              (set-variable :*args* (cdr rest-args))
-              ; load and run source
-              (load-source (car rest-args))
-              ]
-            )
+          ; command-line parameter
+          (set-variable :*args* (cdr rest-args))
+          ; load and run source
+          (load-source (car rest-args))
           ]
         )
+
       )
+    #|
+    (let1 stdin (standard-input-port)
+      (when (char-ready? stdin)
+        (set-variable (make-keyword *implicit-variable*) (port->string stdin)
+                      )
+        (cond
+          [(char-ready? stdin)
+           ; 標準入力でソースが読まれた場合
+           (run-source (port->string stdin))
+           ]
+          [else
+            ; ファイルの実行など
+            (case (length rest-args)
+              ; command line mode
+              [(0)
+               (command-line-environment)
+               ]
+
+              ; file execute mode
+              [else
+                ; command-line parameter
+                (set-variable :*args* (cdr rest-args))
+                ; load and run source
+                (load-source (car rest-args))
+                ]
+              )
+            ]
+          )
+        )
+      )
+    |#
     )
   0
   )

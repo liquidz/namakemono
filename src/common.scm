@@ -1,10 +1,9 @@
-(define *nmk-version* "0.15")
+(define *nmk-version* "0.17")
 
 (define *debug* 0)
 
 (define *global-namespace* (make-hash-table-wrap))
 (define *local-namespace* (make-hash-table-wrap))
-;(define *macro-namespace* (make-hash-table-wrap))
 
 (define *id-count* 1)
 (define *current-uid* '())

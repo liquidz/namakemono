@@ -57,6 +57,10 @@ CHAR 	[A-Za-z_\+\-\*\/\%\=\<\>\!\?]
 	BEGIN(INITIAL);
 }
 
+"#!" {
+	BEGIN(ONE_LINE_COMMENT);
+}
+
 "#/" {
 	clear_buffer();
 	BEGIN(REGEXP);
