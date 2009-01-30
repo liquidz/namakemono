@@ -232,37 +232,6 @@
         )
 
       )
-    #|
-    (let1 stdin (standard-input-port)
-      (when (char-ready? stdin)
-        (set-variable (make-keyword *implicit-variable*) (port->string stdin)
-                      )
-        (cond
-          [(char-ready? stdin)
-           ; 標準入力でソースが読まれた場合
-           (run-source (port->string stdin))
-           ]
-          [else
-            ; ファイルの実行など
-            (case (length rest-args)
-              ; command line mode
-              [(0)
-               (command-line-environment)
-               ]
-
-              ; file execute mode
-              [else
-                ; command-line parameter
-                (set-variable :*args* (cdr rest-args))
-                ; load and run source
-                (load-source (car rest-args))
-                ]
-              )
-            ]
-          )
-        )
-      )
-    |#
     )
   0
   )
